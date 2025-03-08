@@ -1,35 +1,22 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { GalleryVerticalEnd } from "lucide-react"
+import {LoginForm} from "@/components/login-form.jsx";
 
 function App() {
-  const [count, setCount] = useState(0)
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    return (
+        <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
+            <div className="flex w-full max-w-sm flex-col gap-6">
+                <a href="#" className="flex items-center gap-2 self-center font-medium">
+                    <div
+                        className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                        <GalleryVerticalEnd className="size-4"/>
+                    </div>
+                    Acme Inc.
+                </a>
+                <LoginForm/>
+            </div>
+        </div>
+    )
 }
 
 export default App
