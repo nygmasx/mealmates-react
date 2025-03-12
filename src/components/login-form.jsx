@@ -7,9 +7,6 @@ import { Input } from "@/components/ui/input";
 export function LoginForm({ className, ...props }) {
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <div className="flex h-full w-full">
-        <img src="../assets/sac-course.png" alt="Sac de course renverser" />
-      </div>
       <form>
         <div className="flex flex-col gap-6">
           <div className="flex flex-col items-center w-full gap-10">
