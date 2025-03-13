@@ -37,7 +37,7 @@ export function ConnexionForm({ className, ...props }) {
             <p className="text-center">
               Vous n'avez pas de compte ?{" "}
               <a href="" className="text-button-green">
-                S'inscire
+                S'inscrire
               </a>
             </p>
           </div>
