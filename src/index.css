@@ -114,6 +114,7 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --color-google-blue: #5383ec;
   --color-facebook-blue: #4a66ac;
+  --color-button-green: #53b175;
 }
 
 @layer base {
