@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export function InscriptionForm({ className, ...props }) {
+export function SignUpForm({ className, ...props }) {
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <form>

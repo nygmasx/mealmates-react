@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export function ConnexionForm({ className, ...props }) {
+export function ConnectionForm({ className, ...props }) {
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <form>
@@ -27,7 +27,7 @@ export function ConnexionForm({ className, ...props }) {
                 <Label className="text-gray-500">Mot de passe </Label>
                 <Input id="password" type="password" placeholder="● ● ● ● ● ●" required className="p-0" />
               </div>
-              <p className="text-m text-right">Mot de passe oublier ?</p>
+              <p className="text-m text-right">Mot de passe oublié ?</p>
             </div>
           </div>
           <div className="grid gap-4 flex-col">
@@ -37,7 +37,7 @@ export function ConnexionForm({ className, ...props }) {
             <p className="text-center">
               Vous n'avez pas de compte ?{" "}
               <a href="" className="text-button-green">
-                S'inscire
+                S'inscrire
               </a>
             </p>
           </div>
