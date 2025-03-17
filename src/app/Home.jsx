@@ -1,9 +1,4 @@
-import {BrowserRouter, Routes, Route} from "react-router";
-import {Login} from "@/app/auth/Login.jsx";
-import Register from "@/app/auth/Register.jsx";
-import AuthIndex from "@/app/auth/AuthIndex.jsx";
-
-function App() {
+function Home() {
     return (
         <div className="font-inter">
             {/* En-tête du site */}
@@ -346,4 +341,4 @@ function App() {
     );
 }
 
-export default App;
+export default Home;

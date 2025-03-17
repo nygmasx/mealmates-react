@@ -116,12 +116,3 @@
   --color-facebook-blue: #4a66ac;
   --color-button-green: #53b175;
 }
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-}
