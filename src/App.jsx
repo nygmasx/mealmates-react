@@ -32,9 +32,7 @@ function App() {
 
                             {/* Bouton d'inscription */}
                             <div className="w-full md:w-1/4 text-center md:text-right mt-3 md:mt-0">
-                                <button
-                                    className="bg-[#53B175] text-white px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium">S'inscrire
-                                </button>
+                                <a className="bg-[#53B175] text-white px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium" href="/register">S'inscrire</a>
                             </div>
                         </div>
                     </div>

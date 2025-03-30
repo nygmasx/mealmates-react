@@ -15,4 +15,14 @@ export default defineConfig({
             "@": path.resolve(__dirname, "./src"),
         },
     },
+    server: {
+        port: 5173,
+        proxy: {
+            '/api': {
+                target: 'https://groupe-4.lycee-stvincent.net:82',
+                changeOrigin: true,
+                secure: true,
+            }
+        }
+    }
 });

@@ -6,16 +6,24 @@ import {BrowserRouter, Routes, Route} from "react-router";
 import {Login} from "@/app/auth/Login.jsx";
 import AuthIndex from "@/app/auth/AuthIndex.jsx";
 import Register from "@/app/auth/Register.jsx";
+import {AuthProvider} from "@/context/AuthContext.jsx";
+import {ProtectedRoute} from "@/components/ProtectedRoute.jsx";
+import Dashboard from "@/app/Dashboard.jsx";
 
 createRoot(document.getElementById("root")).render(
     <StrictMode>
-        <BrowserRouter>
-            <Routes>
-                <Route path="/" element={<App/>}/>
-                <Route path="/login" element={<Login/>}/>
-                <Route path="/auth" element={<AuthIndex/>}/>
-                <Route path="/register" element={<Register/>}/>
-            </Routes>
-        </BrowserRouter>
+        <AuthProvider>
+            <BrowserRouter>
+                <Routes>
+                    <Route path="/" element={<App/>}/>
+                    <Route path="/login" element={<Login/>}/>
+                    <Route path="/auth" element={<AuthIndex/>}/>
+                    <Route path="/register" element={<Register/>}/>
+                    <Route element={<ProtectedRoute />}>
+                        <Route path="/dashboard" element={<Dashboard />} />
+                    </Route>
+                </Routes>
+            </BrowserRouter>
+        </AuthProvider>
     </StrictMode>
 );
