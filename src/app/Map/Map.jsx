@@ -3,15 +3,15 @@ import useGeolocation from "./Location.jsx";
 import { createUserLocationIcon } from "./CustomMarker.jsx";
 import { useState, useCallback, useEffect } from "react";
 
-function LocationMarker({ position, setPosition }) {
+const LocationMarker = ({ position, setPosition }) => {
   return position === null ? null : (
     <Marker position={position} icon={createUserLocationIcon()}>
       <Popup>Ma position</Popup>
     </Marker>
   );
-}
+};
 
-function MapController({ onLocateClick, setPosition }) {
+const MapController = ({ onLocateClick, setPosition }) => {
   const map = useMap();
 
   const handleLocate = useCallback(() => {
@@ -42,7 +42,7 @@ function MapController({ onLocateClick, setPosition }) {
   onLocateClick(handleLocate);
 
   return null;
-}
+};
 
 export default function Map() {
   const { latitude, longitude } = useGeolocation();
