@@ -1,9 +1,9 @@
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import useGeolocation from "./Location.jsx";
 import { createUserLocationIcon } from "./CustomMarker.jsx";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 
-const LocationMarker = ({ position, setPosition }) => {
+const LocationMarker = ({ position }) => {
   return position === null ? null : (
     <Marker position={position} icon={createUserLocationIcon()}>
       <Popup>Ma position</Popup>
@@ -14,32 +14,42 @@ const LocationMarker = ({ position, setPosition }) => {
 const MapController = ({ onLocateClick, setPosition }) => {
   const map = useMap();
 
-  const handleLocate = useCallback(() => {
-    map.locate();
-  }, [map]);
-
   useEffect(() => {
+    const handleLocate = () => {
+      map.locate();
+    };
+
+    if (onLocateClick) {
+      onLocateClick(handleLocate);
+    }
+
     const handleLocationFound = (e) => {
       setPosition(e.latlng);
       map.flyTo(e.latlng, map.getZoom());
     };
 
-    const handleLocationError = () => {
+    const handleLocationError = (e) => {
+      console.log("Erreur de localisation:", e);
       map.flyTo([49.20345799589907, 2.588511010251282], map.getZoom());
     };
 
     map.on("locationfound", handleLocationFound);
     map.on("locationerror", handleLocationError);
 
-    map.locate();
+    const locateTimer = setTimeout(() => {
+      try {
+        map.locate();
+      } catch (error) {
+        console.error("Erreur lors de l'appel à map.locate():", error);
+      }
+    }, 500);
 
     return () => {
+      clearTimeout(locateTimer);
       map.off("locationfound", handleLocationFound);
       map.off("locationerror", handleLocationError);
     };
-  }, [map, setPosition]);
-
-  onLocateClick(handleLocate);
+  }, [map, setPosition, onLocateClick]);
 
   return null;
 };
@@ -47,15 +57,15 @@ const MapController = ({ onLocateClick, setPosition }) => {
 const Map = () => {
   const { latitude, longitude } = useGeolocation();
   const [currentPosition, setCurrentPosition] = useState([49.20345799589907, 2.588511010251282]);
-  const [locateFunction, setLocateFunction] = useState(null);
+  const locateFunctionRef = useRef(null);
 
   const handleSetLocateFunction = useCallback((fn) => {
-    setLocateFunction(() => fn);
+    locateFunctionRef.current = fn;
   }, []);
 
   const handleButtonClick = () => {
-    if (locateFunction) {
-      locateFunction();
+    if (locateFunctionRef.current) {
+      locateFunctionRef.current();
     }
   };
 
@@ -66,10 +76,10 @@ const Map = () => {
   }, [latitude, longitude]);
 
   return (
-    <div className="relative">
-      <MapContainer style={{ width: "100%", height: "100vh" }} center={currentPosition} zoom={13} scrollWheelZoom={true}>
+    <div className="relative h-screen w-full">
+      <MapContainer className="h-full w-full" center={currentPosition} zoom={13} scrollWheelZoom={true}>
         <TileLayer attribution='&copy; <a href="https://github.com/nygmasx/mealmates-react">Mealmates</a>' url="https://tiles.stadiamaps.com/tiles/osm_bright/{z}/{x}/{y}{r}.png" />
-        <LocationMarker position={currentPosition} setPosition={setCurrentPosition} />
+        <LocationMarker position={currentPosition} />
         <MapController onLocateClick={handleSetLocateFunction} setPosition={setCurrentPosition} />
       </MapContainer>
       <div className="absolute bottom-4 right-4 z-[1000]">
