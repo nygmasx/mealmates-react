@@ -54,8 +54,6 @@ function App() {
                   Donnez vos repas,<br className="hidden lg:block"></br> au lieu de les <span className="text-[#53B175]">Gaspiller</span>
                 </h1>
                 <p className="text-[#53B175] my-4">Mealmates est une plateforme qui vous permet de donner vos repas non consommés à des personnes dans le besoin.</p>
-                <button className="bg-[#53B175] text-white px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium mt-4">S'inscrire</button>
-                <p className="text-[#53B175] my-4">Mealmates est une plateforme qui vous permet de donner vos repas non consommés à des personnes dans le besoin.</p>
                 <button className="bg-[#53B175] text-white px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium mt-4">Commencer maintenant</button>
               </div>
 
