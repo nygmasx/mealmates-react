@@ -22,23 +22,21 @@ function App() {
                   alt="logo"
                 />
               </div>
-              
-              <nav
-                className="hidden md:flex"
-              >
+
+              <nav className="hidden md:flex">
                 <ul className="flex flex-col md:flex-row flex-wrap justify-center md:justify-start gap-2 sm:gap-3 md:gap-4 font-bold text-xs sm:text-base list-none m-0 p-0">
-                  <li className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">
+                  <a className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">
                     Services
-                  </li>
-                  <li className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">
+                  </a>
+                  <a className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">
                     Comment ça marche ?
-                  </li>
-                  <li className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">
+                  </a>
+                  <a className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">
                     Carrière
-                  </li>
-                  <li className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">
+                  </a>
+                  <a className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">
                     Newsletter
-                  </li>
+                  </a>
                 </ul>
               </nav>
 
@@ -78,25 +76,27 @@ function App() {
 
                   {/* Navigation pour desktop (visible sur md et au-dessus) et mobile (conditionnellement visible) */}
                   <nav
-                className={`${
-                  isOpen ? " absolute top-10 bg-white rounded w-[40vw]" : "hidden"
-                } `}
-              >
-                <ul className="flex flex-col md:flex-row flex-wrap justify-center md:justify-start gap-2 sm:gap-3 md:gap-4 font-bold text-xs sm:text-base list-none m-0 p-0">
-                  <li className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">
-                    Services
-                  </li>
-                  <li className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">
-                    Comment ça marche ?
-                  </li>
-                  <li className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">
-                    Carrière
-                  </li>
-                  <li className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">
-                    Newsletter
-                  </li>
-                </ul>
-              </nav>
+                    className={`${
+                      isOpen
+                        ? " absolute top-10 bg-white rounded w-[40vw]"
+                        : "hidden"
+                    } `}
+                  >
+                    <ul className="flex flex-col md:flex-row flex-wrap justify-center md:justify-start gap-2 sm:gap-3 md:gap-4 font-bold text-xs sm:text-base list-none m-0 p-0">
+                      <a className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">
+                        Services
+                      </a>
+                      <a className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">
+                        Comment ça marche ?
+                      </a>
+                      <a className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">
+                        Carrière
+                      </a>
+                      <a className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">
+                        Newsletter
+                      </a>
+                    </ul>
+                  </nav>
                 </div>
               </div>
             </div>
@@ -472,14 +472,18 @@ function App() {
         <div className="w-full px-4">
           <nav className="flex justify-center mx-auto mt-5">
             <ul className="flex flex-col md:flex-row gap-6 xs:flex-row text-xs sm:text-sm md:text-base lg:text-lg flex-wrap justify-center list-none m-0 p-0 gap-y-3">
-              <li className="xs:me-4 text-center xs:text-left">A propos</li>
-              <li className="xs:mx-4 text-center xs:text-left">
+              <a className="xs:me-4 text-center xs:text-left hover:text-[#53B175] transition-colors cursor-pointer">
+                A propos
+              </a>
+              <a className="xs:mx-4 text-center xs:text-left hover:text-[#53B175] transition-colors cursor-pointer">
                 Mentions légales
-              </li>
-              <li className="xs:mx-4 text-center xs:text-left">
+              </a>
+              <a className="xs:mx-4 text-center xs:text-left hover:text-[#53B175] transition-colors cursor-pointer">
                 Politique de confidentialité
-              </li>
-              <li className="xs:ms-4 text-center xs:text-left">Contact</li>
+              </a>
+              <a className="xs:ms-4 text-center xs:text-left hover:text-[#53B175] transition-colors cursor-pointer">
+                Contact
+              </a>
             </ul>
           </nav>
         </div>
