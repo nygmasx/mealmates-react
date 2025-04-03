@@ -43,7 +43,7 @@ export const Login = ({className, ...props}) => {
                     <form onSubmit={handleSubmit}>
                         <div className="flex flex-col gap-6">
                             <div>
-                                <img src="/assets/logo-mealmate.png" alt="Logo MealMate"
+                                <img src="/assets/logo-mealmates.png" alt="Logo MealMate"
                                      className="max-w-3/4  mx-auto"/>
                             </div>
                             <div className="flex flex-col gap-10">
