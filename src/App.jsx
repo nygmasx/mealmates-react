@@ -8,17 +8,14 @@ function App() {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <div className="font-inter">
-      {/* En-tête du site */}
       <header className="min-h-screen bg-[url('/public/assets/header-background.png')] bg-center bg-cover bg-no-repeat relative">
         <div className="mx-auto w-full max-w-7xl px-6 md:px-8 lg:px-12">
-          {/* Barre de navigation responsive */}
           <div className="py-6 md:py-8">
             <div className="flex items-center">
-              {/* Logo */}
               <div className="w-full mb-7/8 md:w-1/6 text-center md:text-left mb-3 md:mb-0">
                 <img
                   className="max-h-16 inline-block"
-                  src="../../public/assets/logo-mealmate.png"
+                  src="../../public/assets/logo-mealmates.png"
                   alt="logo"
                 />
               </div>
@@ -40,9 +37,7 @@ function App() {
                 </ul>
               </nav>
 
-              {/* Menu de navigation */}
               <div className="absolute right-10 top-6">
-                {/* Menu burger sur mobile uniquement */}
                 <div className="md:hidden flex justify-end py-2  ">
                   <button
                     onClick={() => setIsOpen(!isOpen)}
@@ -74,7 +69,6 @@ function App() {
                     </svg>
                   </button>
 
-                  {/* Navigation pour desktop (visible sur md et au-dessus) et mobile (conditionnellement visible) */}
                   <nav
                     className={`${
                       isOpen
@@ -101,18 +95,16 @@ function App() {
               </div>
             </div>
           </div>
-
-          {/* Section principale de l'en-tête */}
+        
           <div className=" min-h-3/4 flex items-center">
             <div className="flex flex-col lg:flex-row items-center">
-              {/* Texte de présentation */}
               <div className="w-full lg:w-2/3 text-center lg:text-left mb-5 lg:mb-0">
                 <h1 className="mb-4 text-4xl md:text-5xl lg:text-6xl font-bold">
                   Donnez vos repas,<br className="hidden lg:block"></br> au lieu
                   de les <span className="text-[#53B175]">Gaspiller</span>
                 </h1>
                 <p className="text-[#53B175] my-4">
-                  Mealmate est une plateforme qui vous permet de donner vos
+                  Mealmates est une plateforme qui vous permet de donner vos
                   repas non consommés à des personnes dans le besoin.
                 </p>
                 <button className="bg-[#53B175] text-white px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium mt-4">
@@ -120,7 +112,6 @@ function App() {
                 </button>
               </div>
 
-              {/* Image de l'application mobile */}
               <div className="w-full lg:w-1/2 text-center">
                 <img
                   className="max-w-4/5 inline-block"
@@ -133,9 +124,7 @@ function App() {
         </div>
       </header>
 
-      {/* Corps principal du site */}
       <section>
-        {/* Première section - Pourquoi MealMates */}
         <div className="bg-[#53B175] py-16 md:py-24 text-white">
           <div className="mx-auto max-w-6xl px-6 md:px-8 lg:px-12">
             <div className="mb-12">
@@ -152,7 +141,6 @@ function App() {
               </div>
             </div>
 
-            {/* Grille des caractéristiques */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-center">
               <div className="mb-5 flex flex-col">
                 <img
@@ -249,7 +237,6 @@ function App() {
           </div>
         </div>
 
-        {/* Séparateur - Statistiques */}
         <div className="py-12 md:py-16 lg:py-24 text-black">
           <div className="px-4 sm:px-6 md:px-10 lg:px-16 xl:px-40 max-w-7xl mx-auto">
             <div className="mb-8 md:mb-12">
@@ -318,7 +305,7 @@ function App() {
             </div>
           </div>
         </div>
-        {/* Deuxième section - Témoignages */}
+
         <div className="bg-[#53B175] text-white py-5">
           <div className="mx-auto max-w-6xl px-4">
             <div className="flex flex-col lg:flex-row">
@@ -416,24 +403,18 @@ function App() {
             </div>
           </div>
         </div>
-
-        {/* Deuxième séparateur - Intégrations */}
-
-        {/* Troisième section - Application mobile */}
       </section>
 
-      {/* Pied de page */}
       <footer>
         <div className="py-8 md:py-12">
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-8">
-              {/* Section logo et texte */}
               <div className="w-full lg:w-1/2 mb-6 lg:mb-0">
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-4">
                   <div className="text-center md:text-left mb-3 md:mb-0">
                     <img
                       className="max-h-12 md:max-h-16"
-                      src="../../public/assets/logo-mealmate.png"
+                      src="../../public/assets/logo-mealmates.png"
                       alt="logo"
                     />
                   </div>
@@ -449,7 +430,6 @@ function App() {
                 </div>
               </div>
 
-              {/* Section formulaire */}
               <div className="w-full lg:w-1/2">
                 <div className="flex flex-col sm:flex-row gap-3">
                   <div className="w-full sm:w-8/12 md:w-7/12">
