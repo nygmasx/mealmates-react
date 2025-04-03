@@ -44,7 +44,7 @@ const MapController = ({ onLocateClick, setPosition }) => {
   return null;
 };
 
-export default function Map() {
+const Map = () => {
   const { latitude, longitude } = useGeolocation();
   const [currentPosition, setCurrentPosition] = useState([49.20345799589907, 2.588511010251282]);
   const [locateFunction, setLocateFunction] = useState(null);
@@ -87,4 +87,6 @@ export default function Map() {
       </div>
     </div>
   );
-}
+};
+
+export default Map;
