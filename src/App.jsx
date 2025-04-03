@@ -36,7 +36,9 @@ function App() {
                   </a>
                 </ul>
               </nav>
-
+              <button className="hidden md:flex ms-auto bg-[#53B175] text-white px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium mt-4">
+                  S'inscrire
+                </button>
               <div className="absolute right-10 top-6">
                 <div className="md:hidden flex justify-end py-2  ">
                   <button
@@ -72,7 +74,7 @@ function App() {
                   <nav
                     className={`${
                       isOpen
-                        ? " absolute top-10 bg-white rounded w-[40vw]"
+                        ? " absolute top-10 bg-white rounded w-[40vw] p-5"
                         : "hidden"
                     } `}
                   >
@@ -90,6 +92,9 @@ function App() {
                         Newsletter
                       </a>
                     </ul>
+                    <button className=" bg-[#53B175] text-white px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium mt-4">
+                  S'inscrire
+                </button>
                   </nav>
                 </div>
               </div>
@@ -108,7 +113,7 @@ function App() {
                   repas non consommés à des personnes dans le besoin.
                 </p>
                 <button className="bg-[#53B175] text-white px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium mt-4">
-                  S'inscrire
+                  Commencer maintenant
                 </button>
               </div>
 
