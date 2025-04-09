@@ -11,7 +11,10 @@ import { AuthProvider } from "@/context/AuthContext.jsx";
 import { ProtectedRoute } from "@/components/ProtectedRoute.jsx";
 import Dashboard from "@/app/Dashboard.jsx";
 import Profile from "@/app/profile/index.jsx";
+<<<<<<< HEAD
 import ProfileHistory from "@/app/profile/history.jsx";
+=======
+>>>>>>> 90af38e220bcacecaa18f368f81e43888fdfbfbc
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -25,7 +28,10 @@ createRoot(document.getElementById("root")).render(
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/profile" element={<Profile />} />
+<<<<<<< HEAD
             <Route path="/profile/history" element={<ProfileHistory />} />
+=======
+>>>>>>> 90af38e220bcacecaa18f368f81e43888fdfbfbc
           </Route>
         </Routes>
       </BrowserRouter>

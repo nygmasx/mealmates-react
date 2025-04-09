@@ -1,7 +1,11 @@
 import { useAuth } from "@/context/AuthContext.jsx";
 import { Button } from "@/components/ui/button";
 
+<<<<<<< HEAD
 export const Profile = () => {
+=======
+function Profile() {
+>>>>>>> 90af38e220bcacecaa18f368f81e43888fdfbfbc
   const { user, logout } = useAuth();
 
   return (
@@ -21,7 +25,11 @@ export const Profile = () => {
       </header>
 
       <main className="flex flex-col">
+<<<<<<< HEAD
         <a href="profile/history" className="flex items-center h-16 shadow">
+=======
+        <a href="" className="flex items-center h-16 shadow">
+>>>>>>> 90af38e220bcacecaa18f368f81e43888fdfbfbc
           <div className="flex w-[15%] justify-center">
             <svg width="21" height="23" viewBox="0 0 21 23" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M4.81909 1.32324L1.81909 5.32324V19.3232C1.81909 19.8537 2.02981 20.3624 2.40488 20.7375C2.77995 21.1125 3.28866 21.3232 3.81909 21.3232H17.8191C18.3495 21.3232 18.8582 21.1125 19.2333 20.7375C19.6084 20.3624 19.8191 19.8537 19.8191 19.3232V5.32324L16.8191 1.32324H4.81909Z" stroke="#181725" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -186,6 +194,10 @@ export const Profile = () => {
       </main>
     </div>
   );
+<<<<<<< HEAD
 };
+=======
+}
+>>>>>>> 90af38e220bcacecaa18f368f81e43888fdfbfbc
 
 export default Profile;
