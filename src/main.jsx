@@ -10,7 +10,8 @@ import Register from "@/app/auth/Register.jsx";
 import { AuthProvider } from "@/context/AuthContext.jsx";
 import { ProtectedRoute } from "@/components/ProtectedRoute.jsx";
 import Dashboard from "@/app/Dashboard.jsx";
-import Map from "@/app/Map/Map.jsx";
+import Profile from "@/app/profile/index.jsx";
+import ProfileHistory from "@/app/profile/history.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -23,7 +24,8 @@ createRoot(document.getElementById("root")).render(
           <Route path="/register" element={<Register />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/map" element={<Map />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/history" element={<ProfileHistory />} />
           </Route>
         </Routes>
       </BrowserRouter>
