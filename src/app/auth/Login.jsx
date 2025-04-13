@@ -24,7 +24,7 @@ export const Login = ({className, ...props}) => {
 
         try {
             await auth.login(email, password);
-            navigate('/dashboard');
+            navigate('/map');
         } catch (err) {
             console.error("Login error:", err);
             setError(

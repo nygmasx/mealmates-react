@@ -1,9 +1,9 @@
 import React, {useEffect, useState} from 'react';
 import {Input} from "@/components/ui/input.jsx";
-import {VscSettings} from "react-icons/vsc";
 import {IoMdClose} from "react-icons/io";
 import {motion, AnimatePresence} from "framer-motion";
 import axiosConfig from "@/context/axiosConfig.js";
+import {FiFilter} from "react-icons/fi";
 
 const SearchIcon = (props) => {
     return (
@@ -161,7 +161,6 @@ const FilterPanel = ({isOpen, onClose}) => {
                             </div>
                         </div>
 
-                        {/* Date d'expiration */}
                         <div className="mb-6">
                             <h3 className="text-lg font-medium mb-3">Date d'expiration maximale</h3>
                             <div className="relative">
@@ -210,7 +209,8 @@ const FilterPanel = ({isOpen, onClose}) => {
                                             onChange={() => handleDietaryPreferenceChange(pref.id)}
                                             className="sr-only"
                                         />
-                                        <span className={selectedPreferences.includes(pref.id) ? 'text-green-800' : 'text-gray-700'}>
+                                        <span
+                                            className={selectedPreferences.includes(pref.id) ? 'text-green-800' : 'text-gray-700'}>
                                             {pref.name}
                                         </span>
                                     </label>
@@ -221,7 +221,7 @@ const FilterPanel = ({isOpen, onClose}) => {
                         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
                             <button
                                 onClick={handleApplyFilters}
-                                className="w-full py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
+                                className="w-full py-3 bg-button-green text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
                             >
                                 Appliquer les filtres
                             </button>
@@ -242,26 +242,29 @@ const Searchbar = ({onFiltersApplied}) => {
 
     return (
         <>
-            <div className="w-full max-w-md mx-auto px-4">
+            <div className="w-full max-w-md mx-auto px-4 flex gap-4 items-center">
                 <div
-                    className="flex items-center space-x-2 rounded-full border border-gray-300 bg-white shadow-lg px-4 py-2 focus-within:ring-2 focus-within:ring-green-500 focus-within:border-green-500 transition-all">
+                    className="w-5/6 flex items-center space-x-2 rounded-full border border-gray-300 bg-white shadow-lg px-4 py-2 focus-within:ring-2 focus-within:ring-green-500 focus-within:border-green-500 transition-all">
                     <SearchIcon className="h-5 w-5 text-gray-500"/>
                     <Input
                         type="search"
                         placeholder="Rechercher un lieu..."
                         className="w-full border-0 bg-transparent h-8 font-medium focus:outline-none focus:ring-0 placeholder:text-gray-400"
                     />
+                </div>
+                <div>
                     <button
                         type="button"
-                        className="hover:bg-gray-200 rounded-full p-2 transition-colors"
+                        className="bg-button-green rounded-full p-4 transition-colors"
                         onClick={toggleFilter}
                     >
-                        <VscSettings className="h-5 w-5 text-gray-500"/>
+                        <FiFilter className="h-5 w-5 text-white"/>
                     </button>
                 </div>
             </div>
 
-            <FilterPanel isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} onFiltersApplied={onFiltersApplied} />
+            <FilterPanel isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)}
+                         onFiltersApplied={onFiltersApplied}/>
         </>
     );
 };
