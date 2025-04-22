@@ -49,7 +49,7 @@ const Navbar = () => {
                 </Link>
 
                 <Link
-                    to="/dashboard"
+                    to="/profile"
                     className={`flex flex-col items-center justify-center ${isActive('/dashboard') ? 'text-green-600' : 'text-gray-600'}`}
                 >
                     <FaRegUser className="text-3xl mb-1"/>
