@@ -9,7 +9,7 @@ export const Profile = () => {
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto py-4 px-6 flex items-center">
           <div className="flex items-center">
-            <img src="/assets/profile.png" alt="Profile" className="h-16" />
+            <img src="/assets/profile.svg" alt="Profile" className="h-16" />
           </div>
           <div className="flex flex-col items-start space-x-4 pl-5">
             <span className="text-gray-700 font-bold">
