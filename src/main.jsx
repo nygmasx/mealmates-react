@@ -17,6 +17,8 @@ import ProfilePreference from "@/app/profile/preference.jsx";
 import ProfileAddress from "@/app/profile/address.jsx";
 import ProfileReview from "@/app/profile/review.jsx";
 import ProfileDisponibility from "@/app/profile/disponibility.jsx";
+import CreateOffer from "@/app/Offers/CreateOffer.jsx";
+import OfferSuccess from "@/app/Offers/OfferSuccess.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -36,6 +38,8 @@ createRoot(document.getElementById("root")).render(
             <Route path="/profile/address" element={<ProfileAddress />} />
             <Route path="/profile/review" element={<ProfileReview />} />
             <Route path="/profile/disponibility" element={<ProfileDisponibility />} />
+            <Route path="/offers/create" element={<CreateOffer />} />
+            <Route path="/offers/success" element={<OfferSuccess />} />
           </Route>
         </Routes>
       </BrowserRouter>
