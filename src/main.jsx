@@ -17,6 +17,7 @@ import ProfilePreference from "@/app/profile/preference.jsx";
 import ProfileAddress from "@/app/profile/address.jsx";
 import ProfileReview from "@/app/profile/review.jsx";
 import ProfileDisponibility from "@/app/profile/disponibility.jsx";
+import Search from "@/app/Search/index.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -30,6 +31,7 @@ createRoot(document.getElementById("root")).render(
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/map" element={<Map />} />
+            <Route path="/search" element={<Search />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/history" element={<ProfileHistory />} />
             <Route path="/profile/preference" element={<ProfilePreference />} />
