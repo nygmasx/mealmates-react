@@ -24,7 +24,7 @@ function App() {
                   <a className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">Newsletter</a>
                 </ul>
               </nav>
-              <button className="hidden md:flex ms-auto bg-[#53B175] text-white px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium mt-4">S'inscrire</button>
+              <a href="/register" className="hidden md:flex ms-auto bg-[#53B175] text-white px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium mt-4">S'inscrire</a>
               <div className="absolute right-10 top-6">
                 <div className="md:hidden flex justify-end py-2  ">
                   <button onClick={() => setIsOpen(!isOpen)} className="p-2 text-black focus:outline-none" aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}>
@@ -40,7 +40,7 @@ function App() {
                       <a className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">Carrière</a>
                       <a className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">Newsletter</a>
                     </ul>
-                    <button className=" bg-[#53B175] text-white px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium mt-4">S'inscrire</button>
+                    <a href="/register" className=" bg-[#53B175] text-white px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium mt-4">S'inscrire</a>
                   </nav>
                 </div>
               </div>
