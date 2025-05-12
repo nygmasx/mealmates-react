@@ -79,7 +79,7 @@ const Map = () => {
 
   return (
       <div className="flex flex-col h-screen">
-        <div className="relative flex-grow">
+        <div className="relative flex-grow h-[90%]">
           <MapContainer className="h-full w-full" center={currentPosition} zoom={13} scrollWheelZoom={true}>
             <TileLayer attribution='&copy; <a href="https://github.com/nygmasx/mealmates-react">Mealmates</a>' url="https://tiles.stadiamaps.com/tiles/osm_bright/{z}/{x}/{y}{r}.png" />
             <LocationMarker position={currentPosition} />
@@ -109,7 +109,7 @@ const Map = () => {
           </div>
         </div>
 
-        <div className="flex-shrink-0 fixed bottom-0 left-0 w-full bg-white shadow-md pb-[env(safe-area-inset-bottom)] z-[1000]">
+        <div className="flex-shrink-0 h-[10%] fixed bottom-0 left-0 w-full bg-white shadow-md pb-[env(safe-area-inset-bottom)] z-[1000]">
           <Navbar />
         </div>
       </div>

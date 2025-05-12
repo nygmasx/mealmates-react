@@ -563,7 +563,10 @@ const Search = () => {
                     </>
                 )}
             </div>
-            <Navbar />
+            <div className='h-[10%]'>
+                <Navbar/>
+            </div>
+            
         </div>
     );
 };

@@ -6,7 +6,7 @@ export const Profile = () => {
   const { user, logout } = useAuth();
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col h-[90%]">
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto py-4 px-6 flex items-center">
           <div className="flex items-center">
@@ -185,7 +185,7 @@ export const Profile = () => {
           </Button>
         </div>
       </main>
-      <div className="flex-shrink-0 fixed bottom-0 left-0 w-full bg-white shadow-md pb-[env(safe-area-inset-bottom)] z-[1000]">
+      <div className="flex-shrink-0 h-[10%] fixed bottom-0 left-0 w-full bg-white shadow-md pb-[env(safe-area-inset-bottom)] z-[1000]">
           <Navbar />
       </div>
     </div>
