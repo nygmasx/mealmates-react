@@ -78,8 +78,8 @@ const Map = () => {
   }, [latitude, longitude]);
 
   return (
-      <div className="flex flex-col h-screen">
-        <div className="relative flex-grow h-[90%]">
+      <div className="flex flex-col h-[90vh]">
+        <div className="relative flex-grow h-full">
           <MapContainer className="h-full w-full" center={currentPosition} zoom={13} scrollWheelZoom={true}>
             <TileLayer attribution='&copy; <a href="https://github.com/nygmasx/mealmates-react">Mealmates</a>' url="https://tiles.stadiamaps.com/tiles/osm_bright/{z}/{x}/{y}{r}.png" />
             <LocationMarker position={currentPosition} />
