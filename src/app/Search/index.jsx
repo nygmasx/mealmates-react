@@ -563,7 +563,7 @@ const Search = () => {
                     </>
                 )}
             </div>
-            <div className='h-[10%]'>
+            <div className="flex-shrink-0 h-[10%] fixed bottom-0 left-0 w-full bg-white shadow-md pb-[env(safe-area-inset-bottom)] z-[1000]">
                 <Navbar/>
             </div>
             

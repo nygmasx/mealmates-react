@@ -90,7 +90,7 @@ const Map = () => {
             <Searchbar/>
           </div>
 
-          <div className="absolute bottom-4 right-4 z-[1000]">
+          <div className="absolute bottom-24 right-4 z-[1000]">
             <button
                 className="w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-100 transition-colors border border-gray-200"
                 onClick={handleButtonClick}
