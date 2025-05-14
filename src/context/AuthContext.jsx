@@ -7,6 +7,7 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [registeredEmail, setRegisteredEmail] = useState("");
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -42,24 +43,9 @@ export const AuthProvider = ({ children }) => {
             password
         });
 
-        const loginResponse = await axiosConfig.post("/login_check", {
-            email,
-            password
-        });
+        setRegisteredEmail(email);
 
-        const token = loginResponse.data.token;
-
-        localStorage.setItem("token", token);
-
-        console.log(token)
-
-        axiosConfig.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-
-        const userResponse = await axiosConfig.get("/user/profile/");
-        setUser(userResponse.data);
-        setIsAuthenticated(true);
-
-        return userResponse.data;
+        return response.data;
     };
 
     const login = async (email, password) => {
@@ -71,8 +57,6 @@ export const AuthProvider = ({ children }) => {
         const token = response.data.token;
 
         localStorage.setItem("token", token);
-
-        console.log(token)
 
         axiosConfig.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
@@ -98,7 +82,8 @@ export const AuthProvider = ({ children }) => {
                 loading,
                 login,
                 register,
-                logout
+                logout,
+                registeredEmail
             }}
         >
             {children}

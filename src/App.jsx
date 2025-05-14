@@ -24,7 +24,9 @@ function App() {
                   <a className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">Newsletter</a>
                 </ul>
               </nav>
-              <a href="/register" className="hidden md:flex ms-auto bg-[#53B175] text-white px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium mt-4">S'inscrire</a>
+              <a href="/register" className="hidden md:flex ms-auto bg-[#53B175] text-white px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium mt-4">
+                S'inscrire
+              </a>
               <div className="absolute right-10 top-6">
                 <div className="md:hidden flex justify-end py-2  ">
                   <button onClick={() => setIsOpen(!isOpen)} className="p-2 text-black focus:outline-none" aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}>
@@ -40,7 +42,9 @@ function App() {
                       <a className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">Carrière</a>
                       <a className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">Newsletter</a>
                     </ul>
-                    <a href="/register" className=" bg-[#53B175] text-white px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium mt-4">S'inscrire</a>
+                    <a href="/register" className=" bg-[#53B175] text-white px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium mt-4">
+                      S'inscrire
+                    </a>
                   </nav>
                 </div>
               </div>
@@ -54,7 +58,7 @@ function App() {
                   Donnez vos repas,<br className="hidden lg:block"></br> au lieu de les <span className="text-[#53B175]">Gaspiller</span>
                 </h1>
                 <p className="text-[#53B175] my-4">Mealmates est une plateforme qui vous permet de donner vos repas non consommés à des personnes dans le besoin.</p>
-                <button className="bg-[#53B175] text-white px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium mt-4">Commencer maintenant</button>
+                <a href="/register" className="hidden md:inline-flex bg-[#53B175] text-white px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium mt-4">Commencer maintenant</a>
               </div>
 
               <div className="w-full lg:w-1/2 text-center">
