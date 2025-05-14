@@ -78,19 +78,19 @@ const Map = () => {
   }, [latitude, longitude]);
 
   return (
-      <div className="flex flex-col h-screen">
-        <div className="relative flex-grow h-[90%]">
-          <MapContainer className="h-full w-full" center={currentPosition} zoom={13} scrollWheelZoom={true}>
+      <div className="flex flex-col h-screen overflow-hidden">
+        <div className="h-[88vh] overflow-hidden">
+          <MapContainer className="h-full w-full z-[900]" center={currentPosition} zoom={13} scrollWheelZoom={true}>
             <TileLayer attribution='&copy; <a href="https://github.com/nygmasx/mealmates-react">Mealmates</a>' url="https://tiles.stadiamaps.com/tiles/osm_bright/{z}/{x}/{y}{r}.png" />
             <LocationMarker position={currentPosition} />
             <MapController onLocateClick={handleSetLocateFunction} setPosition={setCurrentPosition}/>
           </MapContainer>
 
-          <div className="absolute top-4 left-0 right-0 z-[1000]">
+          <div className="fixed top-4 left-0 right-0 z-[1000]">
             <Searchbar/>
           </div>
 
-          <div className="absolute bottom-24 right-4 z-[1000]">
+          <div className="absolute bottom-28 right-4 z-[900]">
             <button
                 className="w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-100 transition-colors border border-gray-200"
                 onClick={handleButtonClick}
@@ -109,7 +109,7 @@ const Map = () => {
           </div>
         </div>
 
-        <div className="flex-shrink-0 h-[10%] fixed bottom-0 left-0 w-full bg-white shadow-md pb-[env(safe-area-inset-bottom)] z-[1000]">
+        <div className="fixed h-[12vh] bottom-0 w-full bg-white shadow-md pb-[env(safe-area-inset-bottom)] z-[900]">
           <Navbar />
         </div>
       </div>

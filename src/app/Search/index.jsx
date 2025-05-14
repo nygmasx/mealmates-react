@@ -258,7 +258,7 @@ const FilterPanel = ({ isOpen, onClose, onApply }) => {
                     </div>
                 </div>
 
-                <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
+                <div className="fixed bottom-0 left-0 right-0 z-[900] p-4 bg-white border-t border-gray-200">
                     <button
                         onClick={handleApply}
                         className="w-full py-3 bg-button-green text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
