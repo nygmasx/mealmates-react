@@ -56,11 +56,17 @@ export const AuthProvider = ({ children }) => {
 
         const token = response.data.token;
 
-        localStorage.setItem("token", token);
-
         axiosConfig.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
         const userResponse = await axiosConfig.get("/user/profile/");
+
+        if (!userResponse.data.isVerified) {
+            delete axiosConfig.defaults.headers.common["Authorization"];
+
+            throw new Error("Veuillez vérifier votre adresse e-mail avant de vous connecter. Consultez votre boîte de réception pour le lien de confirmation.");
+        }
+
+        localStorage.setItem("token", token);
         setUser(userResponse.data);
         setIsAuthenticated(true);
 
