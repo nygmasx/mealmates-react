@@ -39,6 +39,7 @@ export const Login = ({className, ...props}) => {
     return (
         <div className="flex min-h-svh flex-col items-center gap-6 bg-right-top bg-no-repeat p-6">
             <div className="flex w-full max-w-2xl flex-col gap-6">
+
                 <div className={cn("flex flex-col gap-6", className)} {...props}>
                     <form onSubmit={handleSubmit}>
                         <div className="flex flex-col gap-6">

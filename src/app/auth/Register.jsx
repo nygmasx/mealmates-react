@@ -4,7 +4,6 @@ import {Button} from "@/components/ui/button.jsx";
 import {Input} from "@/components/ui/input.jsx";
 import {useState} from "react";
 import {useNavigate} from "react-router";
-import axiosConfig from "@/context/axiosConfig.js";
 import {useAuth} from "@/context/AuthContext.jsx";
 
 const Register = ({className, ...props}) => {
@@ -32,7 +31,7 @@ const Register = ({className, ...props}) => {
                 email,
                 password
             );
-            navigate('/dashboard');
+            navigate('/register-confirmation');
         } catch (err) {
             console.error("Erreur d'inscription:", err);
             setError(
@@ -52,7 +51,7 @@ const Register = ({className, ...props}) => {
                         <div className="flex flex-col gap-6">
                             <div>
                                 <img src="/assets/logo-mealmates.png" alt="Logo MealMate"
-                                     className="max-w-3/4  mx-auto"/>
+                                     className="max-w-3/4 mx-auto"/>
                             </div>
                             <div className="flex flex-col gap-10">
                                 <div className="flex flex-col left-center gap-2">
