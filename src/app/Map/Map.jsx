@@ -4,6 +4,7 @@ import {createProductLocationIcon, createUserLocationIcon} from "./CustomMarker.
 import { useState, useCallback, useEffect, useRef } from "react";
 import Searchbar from "@/components/map/Searchbar.jsx";
 import Navbar from "@/components/Navbar.jsx";
+import Layout from "../Layout.jsx";
 
 const LocationMarker = ({ position }) => {
   return position === null ? null : (
@@ -86,8 +87,9 @@ const Map = () => {
   }, [latitude, longitude]);
 
   return (
-      <div className="flex flex-col h-screen overflow-hidden">
-        <div className="h-[88vh] overflow-hidden">
+    <Layout>
+      <div className="flex flex-col h-full">
+        <div className="h-full">
           <MapContainer className="h-full w-full z-[900]" center={currentPosition} zoom={13} scrollWheelZoom={true}>
             <TileLayer attribution='&copy; <a href="https://github.com/nygmasx/mealmates-react">Mealmates</a>' url="https://tiles.stadiamaps.com/tiles/osm_bright/{z}/{x}/{y}{r}.png" />
             <LocationMarker position={currentPosition} />
@@ -116,11 +118,8 @@ const Map = () => {
             </button>
           </div>
         </div>
-
-        <div className="fixed h-[12vh] bottom-0 w-full bg-white shadow-md pb-[env(safe-area-inset-bottom)] z-[900]">
-          <Navbar />
-        </div>
       </div>
+    </Layout>
   );
 };
 
