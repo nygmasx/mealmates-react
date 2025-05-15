@@ -493,7 +493,7 @@ const Search = () => {
     }
 
     return (
-        <div className="flex flex-col h-screen">
+        <div className="flex flex-col h-full mb-14">
             <div className="flex-grow p-4 overflow-y-auto">
                 <h1 className="text-2xl font-bold mb-4">Explorer</h1>
 
