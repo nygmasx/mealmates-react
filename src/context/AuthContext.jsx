@@ -73,6 +73,17 @@ export const AuthProvider = ({ children }) => {
         return userResponse.data;
     };
 
+    const resendVerificationEmail = async (email) => {
+        try {
+            // Assurez-vous que le endpoint est correct selon votre API
+            await axiosConfig.post("/resend-verification", { email });
+            return true;
+        } catch (error) {
+            console.error("Failed to resend verification email:", error);
+            throw error;
+        }
+    };
+
     const logout = () => {
         localStorage.removeItem("token");
         delete axiosConfig.defaults.headers.common["Authorization"];
@@ -89,7 +100,8 @@ export const AuthProvider = ({ children }) => {
                 login,
                 register,
                 logout,
-                registeredEmail
+                registeredEmail,
+                resendVerificationEmail
             }}
         >
             {children}
