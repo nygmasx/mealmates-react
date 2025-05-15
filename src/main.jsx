@@ -20,6 +20,7 @@ import CreateOffer from "@/app/Offers/CreateOffer.jsx";
 import OfferSuccess from "@/app/Offers/OfferSuccess.jsx";
 import Search from "@/app/Search/index.jsx";
 import RegisterConfirmation from "@/app/auth/RegisterConfirmation.jsx";
+import Messages from "@/app/Message/index.jsx"
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -42,6 +43,7 @@ createRoot(document.getElementById("root")).render(
             <Route path="/profile/disponibility" element={<ProfileDisponibility />} />
             <Route path="/offers/create" element={<CreateOffer />} />
             <Route path="/offers/success" element={<OfferSuccess />} />
+            <Route path="/messages" element={<Messages />} />
           </Route>
         </Routes>
       </BrowserRouter>
