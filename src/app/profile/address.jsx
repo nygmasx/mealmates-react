@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import axiosConfig from "@/context/axiosConfig.js";
 import { useNavigate } from "react-router";
+import { useAuth } from "@/context/AuthContext.jsx";
 
 export const Address = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [coordinates, setCoordinates] = useState(null);
     const [formData, setFormData] = useState({
@@ -15,6 +17,35 @@ export const Address = () => {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
     const [googleMapsReady, setGoogleMapsReady] = useState(false);
+    const [userProfile, setUserProfile] = useState(null);
+
+    useEffect(() => {
+        const fetchUserProfile = async () => {
+            try {
+                const response = await axiosConfig.get("/profile/me");
+                if (response.data && response.data.length > 0) {
+                    setUserProfile(response.data[0]);
+                    setFormData({
+                        street: response.data[0].address_line1 || "",
+                        complement: response.data[0].address_line2 || "",
+                        postalCode: response.data[0].zip_code || "",
+                        city: response.data[0].city || ""
+                    });
+
+                    if (response.data[0].latitude && response.data[0].longitude) {
+                        setCoordinates({
+                            latitude: parseFloat(response.data[0].latitude),
+                            longitude: parseFloat(response.data[0].longitude)
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error("Erreur lors de la récupération du profil:", error);
+            }
+        };
+
+        fetchUserProfile();
+    }, []);
 
     useEffect(() => {
         if (window.google && window.google.maps && window.google.maps.places) {
@@ -149,26 +180,31 @@ export const Address = () => {
                 }
             }
 
-            const addressData = {
-                street: formData.street,
-                complement: formData.complement,
-                postalCode: formData.postalCode,
+            const profileData = {
+                address_line1: formData.street,
+                address_line2: formData.complement,
+                zip_code: formData.postalCode,
                 city: formData.city,
-                latitude: coordinates?.latitude,
-                longitude: coordinates?.longitude
+                latitude: coordinates?.latitude.toString(),
+                longitude: coordinates?.longitude.toString()
             };
 
+            let response;
 
-            await axiosConfig.post("/user/address", addressData);
-
-            setSuccess("Adresse enregistrée avec succès");
+            if (userProfile) {
+                response = await axiosConfig.put(`/profile/${userProfile.id}`, profileData);
+                setSuccess("Adresse mise à jour avec succès");
+            } else {
+                response = await axiosConfig.post("/profile", profileData);
+                setSuccess("Adresse enregistrée avec succès");
+            }
 
             setTimeout(() => {
                 navigate("/profile");
             }, 2000);
         } catch (error) {
             console.error("Erreur d'enregistrement de l'adresse:", error);
-            setError(error.message || "Une erreur est survenue lors de l'enregistrement de l'adresse");
+            setError(error.response?.data?.message || error.message || "Une erreur est survenue lors de l'enregistrement de l'adresse");
         } finally {
             setIsLoading(false);
         }
@@ -223,7 +259,7 @@ export const Address = () => {
 
                     setFormData({
                         street: addressComponents.fullStreet || '',
-                        complement: '',
+                        complement: formData.complement,
                         postalCode: addressComponents.postalCode || '',
                         city: addressComponents.city || ''
                     });
@@ -391,7 +427,7 @@ export const Address = () => {
                             className="w-full mt-2 bg-[#53B175] text-white py-3 rounded-lg text-lg font-medium"
                             disabled={isLoading}
                         >
-                            {isLoading ? "Traitement en cours..." : "Enregistrer l'adresse"}
+                            {isLoading ? "Traitement en cours..." : userProfile ? "Mettre à jour l'adresse" : "Enregistrer l'adresse"}
                         </button>
                     </div>
 

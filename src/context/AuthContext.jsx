@@ -23,7 +23,6 @@ export const AuthProvider = ({ children }) => {
                     setIsAuthenticated(true);
                 } catch (error) {
                     console.error("Auth check failed:", error);
-                    // If token is invalid, clear it
                     localStorage.removeItem("token");
                     delete axiosConfig.defaults.headers.common["Authorization"];
                 }
@@ -75,7 +74,6 @@ export const AuthProvider = ({ children }) => {
 
     const resendVerificationEmail = async (email) => {
         try {
-            // Assurez-vous que le endpoint est correct selon votre API
             await axiosConfig.post("/resend-verification", { email });
             return true;
         } catch (error) {
