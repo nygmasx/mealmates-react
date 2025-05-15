@@ -158,6 +158,7 @@ export const Address = () => {
                 longitude: coordinates?.longitude
             };
 
+
             await axiosConfig.post("/user/address", addressData);
 
             setSuccess("Adresse enregistrée avec succès");
