@@ -1,6 +1,6 @@
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import useGeolocation from "./Location.jsx";
-import { createUserLocationIcon } from "./CustomMarker.jsx";
+import {createProductLocationIcon, createUserLocationIcon} from "./CustomMarker.jsx";
 import { useState, useCallback, useEffect, useRef } from "react";
 import Searchbar from "@/components/map/Searchbar.jsx";
 import Navbar from "@/components/Navbar.jsx";
@@ -12,6 +12,14 @@ const LocationMarker = ({ position }) => {
       </Marker>
   );
 };
+
+const ProductLocationMarker = ({ position }) => {
+  return position === null ? null : (
+      <Marker position={position} icon={createProductLocationIcon()}>
+        <Popup>Position du produit</Popup>
+      </Marker>
+  );
+}
 
 const MapController = ({ onLocateClick, setPosition }) => {
   const map = useMap();
