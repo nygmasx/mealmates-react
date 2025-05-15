@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Search, Send, Paperclip, MoreVertical, ArrowLeft, Image } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import Navbar from "@/components/Navbar.jsx";
 import Layout from "../Layout";
 
 const conversationsData = [

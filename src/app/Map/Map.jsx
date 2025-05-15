@@ -3,7 +3,6 @@ import useGeolocation from "./Location.jsx";
 import {createProductLocationIcon, createUserLocationIcon} from "./CustomMarker.jsx";
 import { useState, useCallback, useEffect, useRef } from "react";
 import Searchbar from "@/components/map/Searchbar.jsx";
-import Navbar from "@/components/Navbar.jsx";
 import Layout from "../Layout.jsx";
 
 const LocationMarker = ({ position }) => {

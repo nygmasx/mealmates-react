@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from "@/context/AuthContext.jsx";
 import axiosConfig from "@/context/axiosConfig.js";
-import Navbar from "@/components/Navbar.jsx";
 import { FaRegClock } from "react-icons/fa";
 import { IoLeafOutline } from "react-icons/io5";
 import { FaMapMarkerAlt } from "react-icons/fa";
@@ -10,6 +9,7 @@ import { RiArrowRightSLine } from "react-icons/ri";
 import { FiSearch, FiFilter } from "react-icons/fi";
 import { IoMdClose } from "react-icons/io";
 import { Input } from "@/components/ui/input";
+import Layout from '../Layout';
 
 const ProductCard = ({ product }) => {
     return (
@@ -487,87 +487,84 @@ const Search = () => {
                 <div className="flex-grow p-4 flex items-center justify-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-button-green"></div>
                 </div>
-                <Navbar />
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col h-full mb-14">
-            <div className="flex-grow p-4 overflow-y-auto">
-                <h1 className="text-2xl font-bold mb-4">Explorer</h1>
+        <Layout>
+            <div className="flex flex-col h-full mb-14">
+                <div className="flex-grow p-4 overflow-y-auto">
+                    <h1 className="text-2xl font-bold mb-4">Explorer</h1>
 
-                <SearchBar
-                    onSearch={handleSearch}
-                    onFilter={() => setIsFilterOpen(true)}
-                />
+                    <SearchBar
+                        onSearch={handleSearch}
+                        onFilter={() => setIsFilterOpen(true)}
+                    />
 
-                <FilterPanel
-                    isOpen={isFilterOpen}
-                    onClose={() => setIsFilterOpen(false)}
-                    onApply={handleApplyFilters}
-                />
+                    <FilterPanel
+                        isOpen={isFilterOpen}
+                        onClose={() => setIsFilterOpen(false)}
+                        onApply={handleApplyFilters}
+                    />
 
-                {searchResults.length > 0 ? (
-                    <div className="mb-6">
-                        <div className="flex justify-between items-center mb-3">
-                            <h2 className="text-lg font-semibold">Résultats</h2>
+                    {searchResults.length > 0 ? (
+                        <div className="mb-6">
+                            <div className="flex justify-between items-center mb-3">
+                                <h2 className="text-lg font-semibold">Résultats</h2>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                {searchResults.map((product, index) => (
+                                    <ProductCard key={`search-${index}`} product={product} />
+                                ))}
+                            </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
-                            {searchResults.map((product, index) => (
-                                <ProductCard key={`search-${index}`} product={product} />
-                            ))}
-                        </div>
-                    </div>
-                ) : (
-                    <>
-                        <ProductSection
-                            title="Recommander à nouveau"
-                            subtitle="Commandez à nouveau chez vos vendeurs préférés"
-                            seeAllLink="/search/recommend"
-                            products={recommendAgain}
-                            icon={<IoMdHeart className="text-button-green mr-2" size={20} />}
-                        />
+                    ) : (
+                        <>
+                            <ProductSection
+                                title="Recommander à nouveau"
+                                subtitle="Commandez à nouveau chez vos vendeurs préférés"
+                                seeAllLink="/search/recommend"
+                                products={recommendAgain}
+                                icon={<IoMdHeart className="text-button-green mr-2" size={20} />}
+                            />
 
-                        <ProductSection
-                            title="Dernière chance"
-                            subtitle="Produits qui expirent aujourd'hui"
-                            seeAllLink="/search/last-chance"
-                            products={lastChance}
-                            icon={<FaRegClock className="text-button-green mr-2" size={20} />}
-                        />
+                            <ProductSection
+                                title="Dernière chance"
+                                subtitle="Produits qui expirent aujourd'hui"
+                                seeAllLink="/search/last-chance"
+                                products={lastChance}
+                                icon={<FaRegClock className="text-button-green mr-2" size={20} />}
+                            />
 
-                        <ProductSection
-                            title="Ce soir je mange vegan"
-                            subtitle="Découvrez nos options 100% végétales"
-                            seeAllLink="/search/vegan"
-                            products={veganTonight}
-                            icon={<IoLeafOutline className="text-button-green mr-2" size={20} />}
-                        />
+                            <ProductSection
+                                title="Ce soir je mange vegan"
+                                subtitle="Découvrez nos options 100% végétales"
+                                seeAllLink="/search/vegan"
+                                products={veganTonight}
+                                icon={<IoLeafOutline className="text-button-green mr-2" size={20} />}
+                            />
 
-                        <ProductSection
-                            title="Tendances locales"
-                            subtitle="Populaire près de chez vous"
-                            seeAllLink="/search/trends"
-                            products={localTrends}
-                            icon={<FaMapMarkerAlt className="text-button-green mr-2" size={20} />}
-                        />
+                            <ProductSection
+                                title="Tendances locales"
+                                subtitle="Populaire près de chez vous"
+                                seeAllLink="/search/trends"
+                                products={localTrends}
+                                icon={<FaMapMarkerAlt className="text-button-green mr-2" size={20} />}
+                            />
 
-                        <ProductSection
-                            title="Sur mesure pour vous"
-                            subtitle="Basé sur vos préférences et votre historique"
-                            seeAllLink="/search/custom"
-                            products={customized}
-                            icon={<IoMdHeart className="text-button-green mr-2" size={20} />}
-                        />
-                    </>
-                )}
+                            <ProductSection
+                                title="Sur mesure pour vous"
+                                subtitle="Basé sur vos préférences et votre historique"
+                                seeAllLink="/search/custom"
+                                products={customized}
+                                icon={<IoMdHeart className="text-button-green mr-2" size={20} />}
+                            />
+                        </>
+                    )}
+                </div>
             </div>
-            <div className="flex-shrink-0 h-[10%] fixed bottom-0 left-0 w-full bg-white shadow-md pb-[env(safe-area-inset-bottom)] z-[1000]">
-                <Navbar/>
-            </div>
-            
-        </div>
+        </Layout>
     );
 };
 
