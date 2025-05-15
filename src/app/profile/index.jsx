@@ -1,5 +1,6 @@
 import { useAuth } from "@/context/AuthContext.jsx";
 import { Button } from "@/components/ui/button";
+import Layout from "../Layout";
 
 export const Profile = () => {
   const { user, logout } = useAuth();
@@ -185,9 +186,6 @@ export const Profile = () => {
             </Button>
           </div>
         </main>
-        <div className="flex-shrink-0 h-[10%] fixed bottom-0 left-0 w-full bg-white shadow-md pb-[env(safe-area-inset-bottom)] z-[1000]">
-            <Navbar />
-        </div>
       </div>
     </Layout>
   );
