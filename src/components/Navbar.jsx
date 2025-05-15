@@ -1,10 +1,10 @@
 import React from 'react';
 import {FaRegUser} from 'react-icons/fa';
 import {Link, useLocation} from 'react-router';
-import {CiMap} from "react-icons/ci";
+import { IoMapOutline } from "react-icons/io5";
 import {RiMenuSearchLine} from "react-icons/ri";
-import {IoCartOutline} from "react-icons/io5";
-import {MdFavoriteBorder} from "react-icons/md";
+import { MdOutlineMessage } from "react-icons/md";
+import { CgAddR } from "react-icons/cg";
 
 const Navbar = () => {
     const location = useLocation();
@@ -20,7 +20,7 @@ const Navbar = () => {
                     to="/map"
                     className={`flex flex-col items-center justify-center ${isActive('/map') ? 'text-green-600' : 'text-gray-600'}`}
                 >
-                    <CiMap className="text-3xl mb-1"/>
+                    <IoMapOutline className="text-3xl mb-1"/>
                     <span className="text-xs">Explorer</span>
                 </Link>
 
@@ -33,19 +33,19 @@ const Navbar = () => {
                 </Link>
 
                 <Link
-                    to="/cart"
+                    to="/offers/create"
                     className={`flex flex-col items-center justify-center ${isActive('/cart') ? 'text-green-600' : 'text-gray-600'}`}
                 >
-                    <IoCartOutline className="text-3xl mb-1"/>
-                    <span className="text-xs">Panier</span>
+                    <CgAddR className="text-3xl mb-1"/>
+                    <span className="text-xs">Publier</span>
                 </Link>
 
                 <Link
-                    to="/favorites"
+                    to="/messages"
                     className={`flex flex-col items-center justify-center ${isActive('/favorites') ? 'text-green-600' : 'text-gray-600'}`}
                 >
-                    <MdFavoriteBorder className="text-3xl mb-1"/>
-                    <span className="text-xs">Favoris</span>
+                    <MdOutlineMessage className="text-3xl mb-1"/>
+                    <span className="text-xs">Messages</span>
                 </Link>
 
                 <Link
