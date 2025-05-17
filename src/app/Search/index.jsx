@@ -179,7 +179,7 @@ const FilterPanel = ({ isOpen, onClose, onApply }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-white z-[950] overflow-y-auto">
             <div className="p-4 pb-24">
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-semibold">Filtres</h2>

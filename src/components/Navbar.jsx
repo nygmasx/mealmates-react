@@ -14,7 +14,7 @@ const Navbar = () => {
     };
 
     return (
-        <div className="w-full h-24 bg-white border-t border-gray-200 shadow-sm fixed bottom-0 z-[1000]">
+        <div className="w-full h-24 bg-white border-t border-gray-200 shadow-sm fixed bottom-0 z-[900]">
             <div className="h-full grid grid-cols-5 max-w-screen-xl mx-auto">
                 <Link
                     to="/map"
