@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { IoArrowBack, IoClose, IoCamera } from "react-icons/io5";
 import { FiClock, FiCalendar } from "react-icons/fi";
 import { SlLocationPin } from "react-icons/sl";
+import Layout from "../Layout.jsx";
 
 const CreateOffer = () => {
     const { user } = useAuth();
@@ -588,74 +589,76 @@ const CreateOffer = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <header className="bg-white shadow-sm">
-                <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 flex items-center justify-between">
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="flex items-center text-gray-600"
-                    >
-                        <IoArrowBack size={20} className="mr-1" />
-                        <span>Retour</span>
-                    </button>
-                    <h1 className="text-xl font-medium text-gray-900">Créer une offre</h1>
-                    <div className="w-20"></div>
-                </div>
-            </header>
-
-            <main className="max-w-2xl mx-auto px-4 py-6 sm:px-6">
-                <div className="bg-white rounded-lg shadow-sm p-6">
-                    {renderStepIndicator()}
-
-                    {currentStep === 0 && renderStep0()}
-                    {currentStep === 1 && renderStep1()}
-                    {currentStep === 2 && renderStep2()}
-                    {currentStep === 3 && renderStep3()}
-
-                    {errors.form && (
-                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
-                            {errors.form}
-                        </div>
-                    )}
-
-                    <div className="flex justify-between mt-6">
-                        {currentStep > 0 ? (
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={handlePrevious}
-                                disabled={isLoading}
-                                className="px-4 py-2"
-                            >
-                                Précédent
-                            </Button>
-                        ) : (
-                            <div></div>
-                        )}
-
-                        {currentStep < 3 ? (
-                            <Button
-                                type="button"
-                                onClick={handleNext}
-                                disabled={isLoading}
-                                className="bg-button-green text-white px-4 py-2"
-                            >
-                                Suivant
-                            </Button>
-                        ) : (
-                            <Button
-                                type="button"
-                                onClick={handleSubmit}
-                                disabled={isLoading}
-                                className="bg-button-green text-white px-4 py-2"
-                            >
-                                {isLoading ? 'Publication...' : 'Publier mon offre'}
-                            </Button>
-                        )}
+        <Layout>
+            <div className="min-h-screen bg-gray-50">
+                <header className="bg-white shadow-sm">
+                    <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 flex items-center justify-between">
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="flex items-center text-gray-600"
+                        >
+                            <IoArrowBack size={20} className="mr-1" />
+                            <span>Retour</span>
+                        </button>
+                        <h1 className="text-xl font-medium text-gray-900">Créer une offre</h1>
+                        <div className="w-20"></div>
                     </div>
-                </div>
-            </main>
-        </div>
+                </header>
+
+                <main className="max-w-2xl mx-auto px-4 py-6 sm:px-6">
+                    <div className="bg-white rounded-lg shadow-sm p-6">
+                        {renderStepIndicator()}
+
+                        {currentStep === 0 && renderStep0()}
+                        {currentStep === 1 && renderStep1()}
+                        {currentStep === 2 && renderStep2()}
+                        {currentStep === 3 && renderStep3()}
+
+                        {errors.form && (
+                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+                                {errors.form}
+                            </div>
+                        )}
+
+                        <div className="flex justify-between mt-6">
+                            {currentStep > 0 ? (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={handlePrevious}
+                                    disabled={isLoading}
+                                    className="px-4 py-2"
+                                >
+                                    Précédent
+                                </Button>
+                            ) : (
+                                <div></div>
+                            )}
+
+                            {currentStep < 3 ? (
+                                <Button
+                                    type="button"
+                                    onClick={handleNext}
+                                    disabled={isLoading}
+                                    className="bg-button-green text-white px-4 py-2"
+                                >
+                                    Suivant
+                                </Button>
+                            ) : (
+                                <Button
+                                    type="button"
+                                    onClick={handleSubmit}
+                                    disabled={isLoading}
+                                    className="bg-button-green text-white px-4 py-2"
+                                >
+                                    {isLoading ? 'Publication...' : 'Publier mon offre'}
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </Layout>
     );
 };
 

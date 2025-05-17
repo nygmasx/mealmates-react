@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Search, Send, Paperclip, MoreVertical, ArrowLeft, Image } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import Navbar from "@/components/Navbar.jsx";
+import Layout from "../Layout";
 
 const conversationsData = [
   {
@@ -125,72 +125,72 @@ export default function MessagerieApp() {
   );
 
   return (
-    <div className="flex flex-col h-screen">
-      <div className="flex flex-1 overflow-hidden">
-        <div className={`w-full md:w-80 border-r ${selectedConversation && 'hidden md:block'}`}>
-          <div className="p-4 border-b">
-            <h1 className="text-xl font-bold text-gray-800">Messages</h1>
-            <div className="mt-3 relative">
-              <Input
-                type="text"
-                placeholder="Rechercher"
-                className="w-full pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+    <Layout>
+      <div className="flex flex-col h-screen">
+        <div className="flex flex-1 overflow-hidden">
+          <div className={`w-full md:w-80 border-r ${selectedConversation && 'hidden md:block'}`}>
+            <div className="p-4 border-b">
+              <h1 className="text-xl font-bold text-gray-800">Messages</h1>
+              <div className="mt-3 relative">
+                <Input
+                  type="text"
+                  placeholder="Rechercher"
+                  className="w-full pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+              </div>
+            </div>
+            
+            <div className="overflow-y-auto h-[calc(100vh-180px)]">
+              {filteredConversations.map(conversation => (
+                <ConversationItem 
+                  key={conversation.id} 
+                  conversation={conversation}
+                  isActive={selectedConversation?.id === conversation.id}
+                  onClick={() => handleSelectConversation(conversation)}
+                />
+              ))}
             </div>
           </div>
           
-          <div className="overflow-y-auto h-[calc(100vh-180px)]">
-            {filteredConversations.map(conversation => (
-              <ConversationItem 
-                key={conversation.id} 
-                conversation={conversation}
-                isActive={selectedConversation?.id === conversation.id}
-                onClick={() => handleSelectConversation(conversation)}
-              />
-            ))}
-          </div>
-        </div>
-        
-        <div className={`flex-1 flex flex-col ${!selectedConversation && 'hidden md:flex'}`}>
-          {selectedConversation ? (
-            <>
-              <div className="flex items-center p-4 border-b">
-                <button 
-                  className="md:hidden mr-2"
-                  onClick={() => setSelectedConversation(null)}
-                >
-                  <ArrowLeft size={20} />
-                </button>
-                <div className="w-10 h-10 rounded-full bg-[#53B175]/10 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-[#53B175]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
+          <div className={`flex-1 flex flex-col ${!selectedConversation && 'hidden md:flex'}`}>
+            {selectedConversation ? (
+              <>
+                <div className="flex items-center p-4 border-b">
+                  <button 
+                    className="md:hidden mr-2"
+                    onClick={() => setSelectedConversation(null)}
+                  >
+                    <ArrowLeft size={20} />
+                  </button>
+                  <div className="w-10 h-10 rounded-full bg-[#53B175]/10 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-[#53B175]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <div className="ml-3 flex-1">
+                    <h2 className="font-medium text-gray-900">{selectedConversation.name}</h2>
+                    <p className="text-xs text-gray-500">En ligne</p>
+                  </div>
+                  <button className="p-2 hover:bg-gray-100 rounded-full">
+                    <MoreVertical size={20} className="text-gray-500" />
+                  </button>
                 </div>
-                <div className="ml-3 flex-1">
-                  <h2 className="font-medium text-gray-900">{selectedConversation.name}</h2>
-                  <p className="text-xs text-gray-500">En ligne</p>
+                
+                <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+                  {messages.map(message => (
+                    <Message key={message.id} message={message} />
+                  ))}
                 </div>
-                <button className="p-2 hover:bg-gray-100 rounded-full">
-                  <MoreVertical size={20} className="text-gray-500" />
-                </button>
-              </div>
-              
-              <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-                {messages.map(message => (
-                  <Message key={message.id} message={message} />
-                ))}
-              </div>
 
-              <div className="p-4 border-t bg-white">
-                <div className="flex items-center">
+                <div className="mb-8 h-12 bg-white flex items-center justify-center">
                   <div className="relative flex-1 mx-2">
                     <Input
                       type="text"
                       placeholder="Écrivez un message..."
-                      className="w-full"
+                      className="w-full rounded-full border-gray-200 focus:border-[#53B175] focus:ring-1 focus:ring-[#53B175] transition-all duration-200 ease-in-out shadow-sm hover:border-gray-300"
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                       onKeyPress={(e) => {
@@ -198,36 +198,35 @@ export default function MessagerieApp() {
                       }}
                     />
                   </div>
-                  <div className="flex">
-                    <Button variant="ghost" size="icon" className="text-gray-500 hover:text-gray-700">
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="text-gray-500 hover:text-[#53B175] hover:bg-[#53B175]/10 transition-colors duration-200">
                       <Paperclip size={20} />
                     </Button>
-                    <Button variant="ghost" size="icon" className="text-gray-500 hover:text-gray-700">
+                    <Button variant="ghost" size="icon" className="text-gray-500 hover:text-[#53B175] hover:bg-[#53B175]/10 transition-colors duration-200">
                       <Image size={20} />
                     </Button>
                     <Button 
                       variant="default"
                       size="icon"
-                      className="bg-[#53B175] text-white hover:bg-[#53B175]/90"
+                      className="bg-[#53B175] text-white hover:bg-[#53B175]/90 transition-colors duration-200 rounded-full"
                       onClick={handleSendMessage}
                     >
                       <Send size={20} />
                     </Button>
                   </div>
                 </div>
+              </>
+            ) : (
+              <div className="flex-1 flex items-center justify-center bg-gray-50">
+                <div className="text-center p-8">
+                  <h2 className="text-xl font-medium text-gray-900 mb-2">Sélectionnez une conversation</h2>
+                  <p className="text-gray-500">Choisissez une conversation dans la liste</p>
+                </div>
               </div>
-            </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center bg-gray-50">
-              <div className="text-center p-8">
-                <h2 className="text-xl font-medium text-gray-900 mb-2">Sélectionnez une conversation</h2>
-                <p className="text-gray-500">Choisissez une conversation dans la liste</p>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
-      <Navbar />
-    </div>
+    </Layout>
   );
 }
