@@ -15,14 +15,12 @@ const LocationMarker = ({ position }) => {
 };
 
 const ProductLocationMarker = ({ productData }) => {
-  console.log("ProductData dans ProductLocationMarker:", productData);
+  const map = useMap();
 
-  // Extraction des données avec la vraie structure de l'API
-  const product = productData["0"] || productData; // Support des deux formats
+  const product = productData["0"] || productData; 
   const latitude = productData.latitude;
   const longitude = productData.longitude;
 
-  // Vérification que nous avons des coordonnées valides
   if (!latitude || !longitude) {
     console.warn("Produit sans coordonnées:", product);
     return null;
@@ -30,7 +28,20 @@ const ProductLocationMarker = ({ productData }) => {
 
   const position = [parseFloat(latitude), parseFloat(longitude)];
 
-  // Formatage simple de la date
+  const handleMarkerClick = () => {
+    const mapContainer = map.getContainer();
+    const mapHeight = mapContainer.offsetHeight;
+    
+    const offsetY = mapHeight * 0.25; 
+    
+    const targetPoint = map.project(position, map.getZoom()).subtract([0, offsetY]);
+    const targetLatLng = map.unproject(targetPoint, map.getZoom());
+    
+    map.flyTo(targetLatLng, 15, {
+      duration: 1
+    });
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return 'Date non spécifiée';
     try {
@@ -40,7 +51,6 @@ const ProductLocationMarker = ({ productData }) => {
     }
   };
 
-  // Types de produits traduits
   const getProductType = (type) => {
     const types = {
       'vegetables': 'Légumes',
@@ -54,7 +64,13 @@ const ProductLocationMarker = ({ productData }) => {
   };
 
   return (
-    <Marker position={position} icon={createProductLocationIcon()}>
+    <Marker 
+      position={position} 
+      icon={createProductLocationIcon()}
+      eventHandlers={{
+        click: handleMarkerClick
+      }}
+    >
       <Popup>
         <div className="min-w-[200px] p-3">
           <h3 className="font-bold text-lg mb-2 text-gray-800">
@@ -75,7 +91,6 @@ const ProductLocationMarker = ({ productData }) => {
             <span className="font-medium">Expire le:</span> {formatDate(product.expiresAt)}
           </div>
           
-          {/* Affichage des préférences alimentaires */}
           {product.dietaryPreferences && product.dietaryPreferences.length > 0 && (
             <div className="mb-3">
               <div className="text-xs font-medium text-gray-700 mb-1">
@@ -165,19 +180,16 @@ const Map = () => {
     }
   };
 
-  // Récupération des produits avec leurs localisations
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        // Utilisation de l'endpoint /product/locations
         const response = await axiosConfig.get('/product/locations');
         
         console.log("Réponse de l'API /product/locations:", response.data);
         
-        // Les données sont déjà dans le bon format avec latitude/longitude
         setProducts(response.data);
         console.log(`${response.data.length} produits chargés avec localisation`);
         
@@ -209,10 +221,8 @@ const Map = () => {
               url="https://tiles.stadiamaps.com/tiles/osm_bright/{z}/{x}/{y}{r}.png" 
             />
             
-            {/* Marqueur de position utilisateur */}
             <LocationMarker position={currentPosition} />
             
-            {/* Marqueurs des produits */}
             {products.map((productData, index) => (
               <ProductLocationMarker 
                 key={productData["0"]?.id || index} 
@@ -227,7 +237,6 @@ const Map = () => {
             <Searchbar/>
           </div>
 
-          {/* Bouton de localisation */}
           <div className="absolute bottom-28 right-4 z-[900]">
             <button
                 className="w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-100 transition-colors border border-gray-200"
@@ -246,7 +255,6 @@ const Map = () => {
             </button>
           </div>
 
-          {/* Indicateur de chargement */}
           {loading && (
             <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-[1000] bg-white rounded-lg shadow-lg px-4 py-2">
               <div className="flex items-center space-x-2">
@@ -256,7 +264,6 @@ const Map = () => {
             </div>
           )}
 
-          {/* Affichage d'erreur */}
           {error && (
             <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-[1000] bg-red-100 border border-red-400 text-red-700 rounded-lg px-4 py-2">
               <span className="text-sm">{error}</span>
