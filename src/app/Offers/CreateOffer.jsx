@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from "@/context/AuthContext.jsx";
 import { useNavigate } from "react-router";
 import axiosConfig from "@/context/axiosConfig.js";
@@ -20,6 +20,7 @@ const CreateOffer = () => {
     const [isRecurring, setIsRecurring] = useState(false);
     const [isDonation, setIsDonation] = useState(false);
     const [showPickupSchedule, setShowPickupSchedule] = useState(false);
+    const [availableDietaryPreferences, setAvailableDietaryPreferences] = useState([]);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -28,6 +29,7 @@ const CreateOffer = () => {
         expirationDate: '',
         price: '',
         pickupAddress: '',
+        type: 'food',
         pickupSchedule: [
             { day: 'Lundi', startTime: '09:00', endTime: '18:00', isEnabled: false },
             { day: 'Mardi', startTime: '09:00', endTime: '18:00', isEnabled: false },
@@ -41,16 +43,26 @@ const CreateOffer = () => {
         dietaryTags: []
     });
 
-    const dietaryOptions = [
-        { id: 1, name: 'Végétarien' },
-        { id: 2, name: 'Vegan' },
-        { id: 3, name: 'Sans gluten' },
-        { id: 4, name: 'Sans lactose' },
-        { id: 5, name: 'Halal' },
-        { id: 6, name: 'Casher' }
-    ];
-
     const [errors, setErrors] = useState({});
+
+    useEffect(() => {
+        const fetchDietaryPreferences = async () => {
+            try {
+                const response = await axiosConfig.get('/dietary-preferences');
+                setAvailableDietaryPreferences(response.data);
+            } catch (error) {
+                console.error('Erreur lors du chargement des préférences alimentaires:', error);
+            }
+        };
+
+        fetchDietaryPreferences();
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            previewImages.forEach(preview => URL.revokeObjectURL(preview));
+        };
+    }, [previewImages]);
 
     const validateStep = (step) => {
         const newErrors = {};
@@ -58,6 +70,13 @@ const CreateOffer = () => {
         if (step === 0) {
             if (!imageFiles.length) {
                 newErrors.images = 'Au moins une photo est requise';
+            }
+
+            const totalSize = imageFiles.reduce((sum, file) => sum + file.size, 0);
+            const maxTotalSize = 10 * 1024 * 1024;
+
+            if (totalSize > maxTotalSize) {
+                newErrors.images = 'La taille totale des images ne doit pas dépasser 10MB';
             }
         } else if (step === 1) {
             if (!formData.title.trim()) {
@@ -97,18 +116,76 @@ const CreateOffer = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleImageUpload = (event) => {
+    const handleImageUpload = async (event) => {
         const files = Array.from(event.target.files);
         if (files.length === 0) return;
 
-        const newFiles = [...imageFiles, ...files].slice(0, 5);
+        const compressedFiles = [];
+        const compressedPreviews = [];
+
+        for (const file of files) {
+            if (imageFiles.length + compressedFiles.length >= 5) break;
+
+            try {
+                const compressedFile = await compressImage(file);
+                compressedFiles.push(compressedFile);
+                compressedPreviews.push(URL.createObjectURL(compressedFile));
+            } catch (error) {
+                console.error('Erreur lors de la compression:', error);
+                compressedFiles.push(file);
+                compressedPreviews.push(URL.createObjectURL(file));
+            }
+        }
+
+        const newFiles = [...imageFiles, ...compressedFiles];
         setImageFiles(newFiles);
 
-        const newPreviews = newFiles.map(file => URL.createObjectURL(file));
-
         previewImages.forEach(preview => URL.revokeObjectURL(preview));
-
+        const newPreviews = [...previewImages, ...compressedPreviews];
         setPreviewImages(newPreviews);
+    };
+
+    const compressImage = (file) => {
+        return new Promise((resolve) => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+
+            img.onload = () => {
+                const MAX_WIDTH = 1200;
+                const MAX_HEIGHT = 1200;
+                const QUALITY = 0.8;
+
+                let { width, height } = img;
+
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height = height * (MAX_WIDTH / width);
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width = width * (MAX_HEIGHT / height);
+                        height = MAX_HEIGHT;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob((blob) => {
+                    const compressedFile = new File([blob], file.name, {
+                        type: 'image/jpeg',
+                        lastModified: Date.now(),
+                    });
+                    resolve(compressedFile);
+                }, 'image/jpeg', QUALITY);
+            };
+
+            img.src = URL.createObjectURL(file);
+        });
     };
 
     const removeImage = (index) => {
@@ -193,45 +270,87 @@ const CreateOffer = () => {
 
         try {
             const offerData = new FormData();
-            imageFiles.forEach((file, index) => {
-                offerData.append(`images[]`, file);
+
+            imageFiles.forEach((file) => {
+                offerData.append('images[]', file);
             });
 
             offerData.append('title', formData.title);
             offerData.append('description', formData.description);
-            offerData.append('quantity', formData.quantity);
+            offerData.append('quantity', formData.quantity.toString());
             offerData.append('expirationDate', formData.expirationDate);
-            offerData.append('isDonation', isDonation);
-            offerData.append('price', isDonation ? 0 : formData.price);
-            offerData.append('pickupAddress', formData.pickupAddress);
-            offerData.append('pickupSchedule', JSON.stringify(formData.pickupSchedule));
-            offerData.append('isRecurring', isRecurring);
-            offerData.append('recurringFrequency', formData.recurringFrequency);
-            offerData.append('dietaryTags', JSON.stringify(formData.dietaryTags));
+            offerData.append('isDonation', isDonation.toString());
 
-            const response = await axiosConfig.post('/offers', offerData, {
+            if (isDonation) {
+                offerData.append('price', '0');
+            } else {
+                offerData.append('price', formData.price.toString());
+            }
+
+            offerData.append('type', formData.type);
+            offerData.append('pickupAddress', formData.pickupAddress);
+
+            const enabledSchedule = formData.pickupSchedule.filter(schedule => schedule.isEnabled);
+            if (enabledSchedule.length === 0) {
+                setErrors({ pickupSchedule: 'Au moins un créneau de retrait est requis' });
+                setIsLoading(false);
+                return;
+            }
+
+            offerData.append('availabilities', JSON.stringify(formData.pickupSchedule));
+
+            offerData.append('isRecurring', isRecurring.toString());
+            offerData.append('recurringFrequency', formData.recurringFrequency);
+
+            if (formData.dietaryTags && formData.dietaryTags.length > 0) {
+                formData.dietaryTags.forEach(tagId => {
+                    offerData.append('dietaryPreferences[]', tagId);
+                });
+            }
+
+            console.log('=== DONNÉES ENVOYÉES ===');
+            for (let [key, value] of offerData.entries()) {
+                console.log(`${key}:`, value);
+            }
+            console.log('========================');
+
+            const response = await axiosConfig.post('/product', offerData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             });
 
-            navigate('/offers/success', { state: { offerId: response.data.id } });
+            navigate('/offers/success', {
+                state: {
+                    offerId: response.data.id,
+                    message: response.data.message || 'Produit créé avec succès'
+                }
+            });
 
         } catch (error) {
             console.error('Erreur lors de la création de l\'offre:', error);
-            setErrors({
-                form: 'Une erreur est survenue lors de la création de l\'offre. Veuillez réessayer.'
-            });
+            console.error('Response data:', error.response?.data);
+            console.error('Response errors:', error.response?.data?.errors);
+
+            if (error.response?.status === 413) {
+                setErrors({
+                    form: 'Les images sont trop volumineuses. Veuillez réduire la taille ou le nombre d\'images et réessayer.'
+                });
+            } else if (error.response?.status === 400 && error.response?.data?.errors) {
+                setErrors(error.response.data.errors);
+            } else if (error.response?.status === 401) {
+                setErrors({
+                    form: 'Vous devez être connecté pour créer une offre. Veuillez vous reconnecter.'
+                });
+            } else {
+                setErrors({
+                    form: error.response?.data?.message || 'Une erreur est survenue lors de la création de l\'offre. Veuillez réessayer.'
+                });
+            }
         } finally {
             setIsLoading(false);
         }
     };
-
-    React.useEffect(() => {
-        return () => {
-            previewImages.forEach(preview => URL.revokeObjectURL(preview));
-        };
-    }, [previewImages]);
 
     const renderStepIndicator = () => {
         return (
@@ -393,25 +512,55 @@ const CreateOffer = () => {
                 </div>
 
                 <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Type de produit
+                    </label>
+                    <select
+                        name="type"
+                        value={formData.type}
+                        onChange={handleChange}
+                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-button-green focus:border-button-green rounded-md"
+                    >
+                        <option value="food">Alimentation</option>
+                        <option value="beverage">Boisson</option>
+                        <option value="bakery">Boulangerie</option>
+                        <option value="dairy">Produits laitiers</option>
+                        <option value="other">Autre</option>
+                    </select>
+                </div>
+
+                <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                         Catégories alimentaires
                     </label>
-                    <div className="flex flex-wrap gap-2">
-                        {dietaryOptions.map((option) => (
-                            <button
-                                key={option.id}
-                                type="button"
-                                onClick={() => toggleDietaryTag(option.id)}
-                                className={`px-3 py-1.5 rounded-lg text-sm ${
-                                    formData.dietaryTags.includes(option.id)
-                                        ? 'bg-green-100 text-button-green border border-button-green'
-                                        : 'bg-gray-100 text-gray-700 border border-gray-300'
-                                }`}
-                            >
-                                {option.name}
-                            </button>
+                    <div className="grid grid-cols-2 gap-2">
+                        {availableDietaryPreferences.map((preference) => (
+                            <label key={preference.id} className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.dietaryTags.includes(preference.id)}
+                                    onChange={(e) => {
+                                        if (e.target.checked) {
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                dietaryTags: [...prev.dietaryTags, preference.id]
+                                            }));
+                                        } else {
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                dietaryTags: prev.dietaryTags.filter(id => id !== preference.id)
+                                            }));
+                                        }
+                                    }}
+                                    className="rounded border-gray-300 text-button-green focus:ring-button-green"
+                                />
+                                <span className="text-sm">{preference.name}</span>
+                            </label>
                         ))}
                     </div>
+                    {availableDietaryPreferences.length === 0 && (
+                        <p className="text-gray-500 text-sm">Chargement des préférences alimentaires...</p>
+                    )}
                 </div>
             </div>
         );
@@ -539,6 +688,7 @@ const CreateOffer = () => {
                     </div>
 
                     {errors.pickupSchedule && <p className="text-red-500 text-sm mt-1">{errors.pickupSchedule}</p>}
+                    {errors.availabilities && <p className="text-red-500 text-sm mt-1">{errors.availabilities}</p>}
 
                     {showPickupSchedule && (
                         <div className="border rounded-lg p-4 bg-gray-50">
