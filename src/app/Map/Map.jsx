@@ -4,6 +4,7 @@ import {createProductLocationIcon, createUserLocationIcon} from "./CustomMarker.
 import { useState, useCallback, useEffect, useRef } from "react";
 import Searchbar from "@/components/map/Searchbar.jsx";
 import Layout from "../Layout.jsx";
+import axiosConfig from "@/context/axiosConfig.js";
 
 const LocationMarker = ({ position }) => {
   return position === null ? null : (
@@ -13,13 +14,110 @@ const LocationMarker = ({ position }) => {
   );
 };
 
-const ProductLocationMarker = ({ position }) => {
-  return position === null ? null : (
-      <Marker position={position} icon={createProductLocationIcon()}>
-        <Popup>Position du produit</Popup>
-      </Marker>
+const ProductLocationMarker = ({ productData }) => {
+  const map = useMap();
+
+  const product = productData["0"] || productData; 
+  const latitude = productData.latitude;
+  const longitude = productData.longitude;
+
+  if (!latitude || !longitude) {
+    console.warn("Produit sans coordonnées:", product);
+    return null;
+  }
+
+  const position = [parseFloat(latitude), parseFloat(longitude)];
+
+  const handleMarkerClick = () => {
+    const mapContainer = map.getContainer();
+    const mapHeight = mapContainer.offsetHeight;
+    
+    const offsetY = mapHeight * 0.25; 
+    
+    const targetPoint = map.project(position, map.getZoom()).subtract([0, offsetY]);
+    const targetLatLng = map.unproject(targetPoint, map.getZoom());
+    
+    map.flyTo(targetLatLng, 15, {
+      duration: 1
+    });
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Date non spécifiée';
+    try {
+      return new Date(dateString).toLocaleDateString('fr-FR');
+    } catch {
+      return 'Date invalide';
+    }
+  };
+
+  const getProductType = (type) => {
+    const types = {
+      'vegetables': 'Légumes',
+      'fruits': 'Fruits', 
+      'prepared_meal': 'Plat préparé',
+      'dairy_product': 'Produit laitier',
+      'cake': 'Gâteau',
+      'other': 'Autre'
+    };
+    return types[type] || type || 'Non spécifié';
+  };
+
+  return (
+    <Marker 
+      position={position} 
+      icon={createProductLocationIcon()}
+      eventHandlers={{
+        click: handleMarkerClick
+      }}
+    >
+      <Popup>
+        <div className="min-w-[200px] p-3">
+          <h3 className="font-bold text-lg mb-2 text-gray-800">
+            {product.title || 'Titre manquant'}
+          </h3>
+          
+          <div className="text-sm text-gray-600 mb-2">
+            <span className="font-medium">Type:</span> {getProductType(product.type)}
+          </div>
+          
+          <div className="flex justify-between items-center mb-2">
+            <span className="font-bold text-green-600 text-lg">
+              {product.price > 0 ? `${product.price}€` : 'Gratuit'}
+            </span>
+          </div>
+          
+          <div className="text-xs text-gray-500 mb-3">
+            <span className="font-medium">Expire le:</span> {formatDate(product.expiresAt)}
+          </div>
+          
+          {product.dietaryPreferences && product.dietaryPreferences.length > 0 && (
+            <div className="mb-3">
+              <div className="text-xs font-medium text-gray-700 mb-1">
+                Régimes compatibles:
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {product.dietaryPreferences.slice(0, 3).map((pref) => (
+                  <span 
+                    key={pref.id} 
+                    className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs"
+                  >
+                    {pref.name}
+                  </span>
+                ))}
+                {product.dietaryPreferences.length > 3 && (
+                  <span className="text-gray-500 text-xs">
+                    +{product.dietaryPreferences.length - 3} autres
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </Popup>
+    </Marker>
   );
-}
+};
 
 const MapController = ({ onLocateClick, setPosition }) => {
   const map = useMap();
@@ -39,7 +137,6 @@ const MapController = ({ onLocateClick, setPosition }) => {
     };
 
     const handleLocationError = (e) => {
-      console.log("Erreur de localisation:", e);
       map.flyTo([49.20345799589907, 2.588511010251282], map.getZoom());
     };
 
@@ -67,6 +164,9 @@ const MapController = ({ onLocateClick, setPosition }) => {
 const Map = () => {
   const { latitude, longitude } = useGeolocation();
   const [currentPosition, setCurrentPosition] = useState([49.20345799589907, 2.588511010251282]);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const locateFunctionRef = useRef(null);
 
   const handleSetLocateFunction = useCallback((fn) => {
@@ -80,6 +180,29 @@ const Map = () => {
   };
 
   useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await axiosConfig.get('/product/locations');
+        
+        
+        setProducts(response.data);
+        
+      } catch (error) {
+        console.error("Erreur lors de la récupération des produits:", error);
+        setError("Impossible de charger les produits avec localisation");
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  useEffect(() => {
     if (latitude && longitude) {
       setCurrentPosition([latitude, longitude]);
     }
@@ -90,8 +213,20 @@ const Map = () => {
       <div className="flex flex-col h-full">
         <div className="h-full">
           <MapContainer className="h-full w-full z-[900]" center={currentPosition} zoom={13} scrollWheelZoom={true}>
-            <TileLayer attribution='&copy; <a href="https://github.com/nygmasx/mealmates-react">Mealmates</a>' url="https://tiles.stadiamaps.com/tiles/osm_bright/{z}/{x}/{y}{r}.png" />
+            <TileLayer 
+              attribution='&copy; <a href="https://github.com/nygmasx/mealmates-react">Mealmates</a>' 
+              url="https://tiles.stadiamaps.com/tiles/osm_bright/{z}/{x}/{y}{r}.png" 
+            />
+            
             <LocationMarker position={currentPosition} />
+            
+            {products.map((productData, index) => (
+              <ProductLocationMarker 
+                key={productData["0"]?.id || index} 
+                productData={productData} 
+              />
+            ))}
+            
             <MapController onLocateClick={handleSetLocateFunction} setPosition={setCurrentPosition}/>
           </MapContainer>
 
@@ -116,6 +251,21 @@ const Map = () => {
               </svg>
             </button>
           </div>
+
+          {loading && (
+            <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-[1000] bg-white rounded-lg shadow-lg px-4 py-2">
+              <div className="flex items-center space-x-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-500"></div>
+                <span className="text-sm">Chargement des produits...</span>
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-[1000] bg-red-100 border border-red-400 text-red-700 rounded-lg px-4 py-2">
+              <span className="text-sm">{error}</span>
+            </div>
+          )}
         </div>
       </div>
     </Layout>
