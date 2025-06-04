@@ -137,7 +137,6 @@ const MapController = ({ onLocateClick, setPosition }) => {
     };
 
     const handleLocationError = (e) => {
-      console.log("Erreur de localisation:", e);
       map.flyTo([49.20345799589907, 2.588511010251282], map.getZoom());
     };
 
@@ -188,10 +187,8 @@ const Map = () => {
         
         const response = await axiosConfig.get('/product/locations');
         
-        console.log("Réponse de l'API /product/locations:", response.data);
         
         setProducts(response.data);
-        console.log(`${response.data.length} produits chargés avec localisation`);
         
       } catch (error) {
         console.error("Erreur lors de la récupération des produits:", error);
