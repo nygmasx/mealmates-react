@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from "@/context/AuthContext.jsx";
-import { useNavigate } from "react-router";
+import React, {useState, useEffect, useRef} from 'react';
+import {useAuth} from "@/context/AuthContext.jsx";
+import {useNavigate} from "react-router";
 import axiosConfig from "@/context/axiosConfig.js";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { IoArrowBack, IoClose, IoCamera } from "react-icons/io5";
-import { FiClock, FiCalendar } from "react-icons/fi";
-import { SlLocationPin } from "react-icons/sl";
+import {Input} from "@/components/ui/input";
+import {Button} from "@/components/ui/button";
+import {IoArrowBack, IoClose, IoCamera} from "react-icons/io5";
+import {FiClock, FiCalendar} from "react-icons/fi";
+import {SlLocationPin} from "react-icons/sl";
 import Layout from "../Layout.jsx";
 
 const CreateOffer = () => {
-    const { user } = useAuth();
+    const {user} = useAuth();
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
     const [currentStep, setCurrentStep] = useState(0);
@@ -21,6 +21,11 @@ const CreateOffer = () => {
     const [isDonation, setIsDonation] = useState(false);
     const [showPickupSchedule, setShowPickupSchedule] = useState(false);
     const [availableDietaryPreferences, setAvailableDietaryPreferences] = useState([]);
+    const [googleMapsReady, setGoogleMapsReady] = useState(false);
+
+    // Refs pour Google Places
+    const autocompleteRef = useRef(null);
+    const inputRef = useRef(null);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -31,13 +36,13 @@ const CreateOffer = () => {
         pickupAddress: '',
         type: 'food',
         pickupSchedule: [
-            { day: 'Lundi', startTime: '09:00', endTime: '18:00', isEnabled: false },
-            { day: 'Mardi', startTime: '09:00', endTime: '18:00', isEnabled: false },
-            { day: 'Mercredi', startTime: '09:00', endTime: '18:00', isEnabled: false },
-            { day: 'Jeudi', startTime: '09:00', endTime: '18:00', isEnabled: false },
-            { day: 'Vendredi', startTime: '09:00', endTime: '18:00', isEnabled: false },
-            { day: 'Samedi', startTime: '09:00', endTime: '18:00', isEnabled: false },
-            { day: 'Dimanche', startTime: '09:00', endTime: '18:00', isEnabled: false }
+            {day: 'Lundi', startTime: '09:00', endTime: '18:00', isEnabled: false},
+            {day: 'Mardi', startTime: '09:00', endTime: '18:00', isEnabled: false},
+            {day: 'Mercredi', startTime: '09:00', endTime: '18:00', isEnabled: false},
+            {day: 'Jeudi', startTime: '09:00', endTime: '18:00', isEnabled: false},
+            {day: 'Vendredi', startTime: '09:00', endTime: '18:00', isEnabled: false},
+            {day: 'Samedi', startTime: '09:00', endTime: '18:00', isEnabled: false},
+            {day: 'Dimanche', startTime: '09:00', endTime: '18:00', isEnabled: false}
         ],
         recurringFrequency: 'weekly',
         dietaryTags: []
@@ -45,10 +50,84 @@ const CreateOffer = () => {
 
     const [errors, setErrors] = useState({});
 
+    // Initialisation de Google Maps Places API
+    useEffect(() => {
+        if (window.google && window.google.maps && window.google.maps.places) {
+            setGoogleMapsReady(true);
+            return;
+        }
+
+        // Callback global pour l'initialisation
+        window.initGooglePlacesAPI = () => {
+            setGoogleMapsReady(true);
+        };
+
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyC-45f2IfwEkoDVOdITcUXdxZ6QiNk7dAw&libraries=places&callback=initGooglePlacesAPI`;
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+
+        return () => {
+            delete window.initGooglePlacesAPI;
+        };
+    }, []);
+
+    // Initialisation de l'autocomplétion quand Google Maps est prêt
+    useEffect(() => {
+        if (googleMapsReady && inputRef.current) {
+            initializeAutocomplete();
+        }
+    }, [googleMapsReady, currentStep]); // Réinitialiser quand on arrive à l'étape 3
+
+    const initializeAutocomplete = () => {
+        if (!inputRef.current || !window.google) return;
+
+        // Détruire l'ancienne instance si elle existe
+        if (autocompleteRef.current) {
+            window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+        }
+
+        // Créer une nouvelle instance d'autocomplétion
+        autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
+            componentRestrictions: {country: 'fr'},
+            fields: ['address_components', 'formatted_address'],
+            types: ['address']
+        });
+
+        // Écouter les changements de lieu
+        autocompleteRef.current.addListener('place_changed', () => {
+            const place = autocompleteRef.current.getPlace();
+
+            if (!place.formatted_address) {
+                setErrors(prev => ({
+                    ...prev,
+                    pickupAddress: "Aucune information sur cette adresse. Veuillez en sélectionner une dans la liste."
+                }));
+                return;
+            }
+
+            // Mettre à jour l'adresse avec l'adresse formatée par Google
+            setFormData(prev => ({
+                ...prev,
+                pickupAddress: place.formatted_address
+            }));
+
+            // Effacer l'erreur d'adresse si elle existait
+            if (errors.pickupAddress) {
+                setErrors(prev => {
+                    const {pickupAddress, ...rest} = prev;
+                    return rest;
+                });
+            }
+        });
+    };
+
     useEffect(() => {
         const fetchDietaryPreferences = async () => {
             try {
-                const response = await axiosConfig.get('/dietary-preferences');
+                axiosConfig.defaults.headers.common["Authorization"];
+                const response = await axiosConfig.get('/dietary-preferences/');
                 setAvailableDietaryPreferences(response.data);
             } catch (error) {
                 console.error('Erreur lors du chargement des préférences alimentaires:', error);
@@ -63,6 +142,81 @@ const CreateOffer = () => {
             previewImages.forEach(preview => URL.revokeObjectURL(preview));
         };
     }, [previewImages]);
+
+    // Fonction pour utiliser la géolocalisation actuelle
+    const handleUseCurrentLocation = () => {
+        if (!navigator.geolocation) {
+            setErrors(prev => ({
+                ...prev,
+                pickupAddress: "La géolocalisation n'est pas prise en charge par votre navigateur"
+            }));
+            return;
+        }
+
+        if (!googleMapsReady) {
+            setErrors(prev => ({
+                ...prev,
+                pickupAddress: "Le service de géocodage n'est pas encore disponible"
+            }));
+            return;
+        }
+
+        setIsLoading(true);
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const {latitude, longitude} = position.coords;
+
+                try {
+                    const geocoder = new window.google.maps.Geocoder();
+                    const location = {lat: latitude, lng: longitude};
+
+                    geocoder.geocode({location}, (results, status) => {
+                        setIsLoading(false);
+
+                        if (status === "OK" && results[0]) {
+                            setFormData(prev => ({
+                                ...prev,
+                                pickupAddress: results[0].formatted_address
+                            }));
+
+                            // Effacer l'erreur d'adresse si elle existait
+                            if (errors.pickupAddress) {
+                                setErrors(prev => {
+                                    const {pickupAddress, ...rest} = prev;
+                                    return rest;
+                                });
+                            }
+                        } else {
+                            setErrors(prev => ({
+                                ...prev,
+                                pickupAddress: "Impossible de déterminer votre adresse actuelle"
+                            }));
+                        }
+                    });
+                } catch (error) {
+                    setIsLoading(false);
+                    console.error("Erreur de géocodage inverse:", error);
+                    setErrors(prev => ({
+                        ...prev,
+                        pickupAddress: "Impossible de déterminer votre adresse actuelle"
+                    }));
+                }
+            },
+            (error) => {
+                setIsLoading(false);
+                console.error("Erreur de géolocalisation:", error);
+                setErrors(prev => ({
+                    ...prev,
+                    pickupAddress: "Impossible d'obtenir votre position actuelle"
+                }));
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+            }
+        );
+    };
 
     const validateStep = (step) => {
         const newErrors = {};
@@ -156,7 +310,7 @@ const CreateOffer = () => {
                 const MAX_HEIGHT = 1200;
                 const QUALITY = 0.8;
 
-                let { width, height } = img;
+                let {width, height} = img;
 
                 if (width > height) {
                     if (width > MAX_WIDTH) {
@@ -202,7 +356,7 @@ const CreateOffer = () => {
     };
 
     const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
+        const {name, value, type, checked} = e.target;
         if (type === 'checkbox') {
             setFormData({
                 ...formData,
@@ -292,7 +446,7 @@ const CreateOffer = () => {
 
             const enabledSchedule = formData.pickupSchedule.filter(schedule => schedule.isEnabled);
             if (enabledSchedule.length === 0) {
-                setErrors({ pickupSchedule: 'Au moins un créneau de retrait est requis' });
+                setErrors({pickupSchedule: 'Au moins un créneau de retrait est requis'});
                 setIsLoading(false);
                 return;
             }
@@ -369,7 +523,7 @@ const CreateOffer = () => {
                             {step + 1}
                         </div>
                         {step < 3 && (
-                            <div className={`w-10 h-1 ${currentStep > step ? 'bg-button-green' : 'bg-gray-200'}`} />
+                            <div className={`w-10 h-1 ${currentStep > step ? 'bg-button-green' : 'bg-gray-200'}`}/>
                         )}
                     </div>
                 ))}
@@ -397,14 +551,15 @@ const CreateOffer = () => {
                                 className="absolute top-2 right-2 bg-black bg-opacity-50 text-white rounded-full p-1.5"
                                 onClick={() => removeImage(index)}
                             >
-                                <IoClose size={16} />
+                                <IoClose size={16}/>
                             </button>
                         </div>
                     ))}
 
                     {previewImages.length < 5 && (
-                        <label className="aspect-square rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer bg-gray-50">
-                            <IoCamera size={24} className="text-gray-400 mb-2" />
+                        <label
+                            className="aspect-square rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer bg-gray-50">
+                            <IoCamera size={24} className="text-gray-400 mb-2"/>
                             <span className="text-sm text-gray-500">Ajouter</span>
                             <input
                                 type="file"
@@ -420,7 +575,8 @@ const CreateOffer = () => {
                 {errors.images && <p className="text-red-500 text-sm mt-1">{errors.images}</p>}
 
                 {showImageFullscreen && (
-                    <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center p-4" onClick={() => setShowImageFullscreen(null)}>
+                    <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center p-4"
+                         onClick={() => setShowImageFullscreen(null)}>
                         <div className="relative max-w-full max-h-full">
                             <img
                                 src={showImageFullscreen}
@@ -432,7 +588,7 @@ const CreateOffer = () => {
                                 className="absolute top-4 right-4 bg-black bg-opacity-50 text-white rounded-full p-2"
                                 onClick={() => setShowImageFullscreen(null)}
                             >
-                                <IoClose size={24} />
+                                <IoClose size={24}/>
                             </button>
                         </div>
                     </div>
@@ -497,7 +653,7 @@ const CreateOffer = () => {
                     </label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <FiCalendar className="text-gray-400" />
+                            <FiCalendar className="text-gray-400"/>
                         </div>
                         <Input
                             type="date"
@@ -659,9 +815,10 @@ const CreateOffer = () => {
                     </label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <SlLocationPin className="text-gray-400" />
+                            <SlLocationPin className="text-gray-400"/>
                         </div>
                         <Input
+                            ref={inputRef}
                             type="text"
                             name="pickupAddress"
                             value={formData.pickupAddress}
@@ -671,6 +828,16 @@ const CreateOffer = () => {
                         />
                     </div>
                     {errors.pickupAddress && <p className="text-red-500 text-sm mt-1">{errors.pickupAddress}</p>}
+
+                    {/* Bouton pour utiliser la position actuelle */}
+                    <button
+                        type="button"
+                        onClick={handleUseCurrentLocation}
+                        disabled={isLoading || !googleMapsReady}
+                        className="mt-2 text-sm text-button-green border border-button-green bg-white px-3 py-1 rounded hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {isLoading ? "Détection en cours..." : "📍 Utiliser ma position actuelle"}
+                    </button>
                 </div>
 
                 <div className="mb-4">
@@ -693,7 +860,8 @@ const CreateOffer = () => {
                     {showPickupSchedule && (
                         <div className="border rounded-lg p-4 bg-gray-50">
                             {formData.pickupSchedule.map((schedule, index) => (
-                                <div key={index} className="mb-3 pb-3 border-b border-gray-200 last:border-0 last:mb-0 last:pb-0">
+                                <div key={index}
+                                     className="mb-3 pb-3 border-b border-gray-200 last:border-0 last:mb-0 last:pb-0">
                                     <div className="flex items-center mb-2">
                                         <input
                                             type="checkbox"
@@ -747,7 +915,7 @@ const CreateOffer = () => {
                             onClick={() => navigate(-1)}
                             className="flex items-center text-gray-600"
                         >
-                            <IoArrowBack size={20} className="mr-1" />
+                            <IoArrowBack size={20} className="mr-1"/>
                             <span>Retour</span>
                         </button>
                         <h1 className="text-xl font-medium text-gray-900">Créer une offre</h1>
@@ -812,4 +980,4 @@ const CreateOffer = () => {
     );
 };
 
-export default CreateOffer;
+export default CreateOffer
