@@ -9,18 +9,20 @@ import AuthIndex from "@/app/auth/AuthIndex.jsx";
 import Register from "@/app/auth/Register.jsx";
 import { AuthProvider } from "@/context/AuthContext.jsx";
 import { ProtectedRoute } from "@/components/ProtectedRoute.jsx";
-import Map from "@/app/Map/Map.jsx";
+import Map from "@/app/map/Map.jsx";
 import Profile from "@/app/profile/index.jsx";
 import ProfileHistory from "@/app/profile/history.jsx";
 import ProfilePreference from "@/app/profile/preference.jsx";
 import ProfileAddress from "@/app/profile/address.jsx";
 import ProfileReview from "@/app/profile/review.jsx";
 import ProfileDisponibility from "@/app/profile/disponibility.jsx";
-import CreateOffer from "@/app/Offers/CreateOffer.jsx";
-import OfferSuccess from "@/app/Offers/OfferSuccess.jsx";
-import Search from "@/app/Search/index.jsx";
+import CreateOffer from "@/app/offers/CreateOffer.jsx";
+import OfferSuccess from "@/app/offers/OfferSuccess.jsx";
+import Search from "@/app/products/index.jsx";
 import RegisterConfirmation from "@/app/auth/RegisterConfirmation.jsx";
-import Messages from "@/app/Message/index.jsx"
+import Messages from "@/app/messages/index.jsx"
+import OffersList from "@/app/products/list.jsx";
+import ProfileProducts from "@/app/profile/products.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
@@ -34,13 +36,15 @@ createRoot(document.getElementById("root")).render(
           <Route path="/register-confirmation" element={<RegisterConfirmation />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/map" element={<Map />} />
-            <Route path="/search" element={<Search />} />
+            <Route path="/offers" element={<Search />} />
+            <Route path="/offers/all" element={<OffersList />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/history" element={<ProfileHistory />} />
             <Route path="/profile/preference" element={<ProfilePreference />} />
             <Route path="/profile/address" element={<ProfileAddress />} />
             <Route path="/profile/review" element={<ProfileReview />} />
             <Route path="/profile/disponibility" element={<ProfileDisponibility />} />
+            <Route path="/profile/products" element={<ProfileProducts />} />
             <Route path="/offers/create" element={<CreateOffer />} />
             <Route path="/offers/success" element={<OfferSuccess />} />
             <Route path="/messages" element={<Messages />} />

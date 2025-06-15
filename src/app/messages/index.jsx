@@ -4,12 +4,10 @@ import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
 import Layout from "../Layout";
 import axiosConfig from "@/context/axiosConfig.js";
-// Custom hook for polling messages
 const usePolling = (callback, interval = 2000, enabled = true) => {
     const intervalRef = useRef(null);
     const callbackRef = useRef(callback);
 
-    // Update callback ref when callback changes
     useEffect(() => {
         callbackRef.current = callback;
     }, [callback]);

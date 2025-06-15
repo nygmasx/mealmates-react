@@ -12,13 +12,45 @@ import { Input } from "@/components/ui/input";
 import Layout from '../Layout';
 
 const ProductCard = ({ product }) => {
+    const formatPrice = (price) => {
+        if (typeof price === 'string') {
+            return parseFloat(price).toFixed(2);
+        }
+        return price.toFixed(2);
+    };
+
+    const getExpirationText = (expirationDate) => {
+        if (!expirationDate) return null;
+
+        const today = new Date();
+        const expDate = new Date(expirationDate);
+        const diffTime = expDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) return "aujourd'hui";
+        if (diffDays === 1) return "demain";
+        if (diffDays > 1) return `dans ${diffDays} jours`;
+        return "expiré";
+    };
+
+    const getImageUrl = (product) => {
+        if (product.images && product.images.length > 0) {
+            return `https://apimates.testingtest.fr/${product.images[0]}`;
+        }
+        const productName = product.title || product.name || 'Produit';
+        return `https://placehold.co/400x200/e2e8f0/ffffff?text=${encodeURIComponent(productName.split(' ')[0])}`;
+    };
+
     return (
         <div className="min-w-[150px] max-w-[170px] flex-shrink-0 shadow-md rounded-xl overflow-hidden bg-white">
             <div className="relative">
                 <img
-                    src={`https://placehold.co/400x200/${product.color || 'e2e8f0'}/ffffff?text=${encodeURIComponent(product.name.split(' ')[0])}`}
-                    alt={product.name}
+                    src={getImageUrl(product)}
+                    alt={product.title || product.name}
                     className="w-full h-28 object-cover"
+                    onError={(e) => {
+                        e.target.src = `https://placehold.co/400x200/e2e8f0/ffffff?text=${encodeURIComponent((product.title || product.name || 'Produit').split(' ')[0])}`;
+                    }}
                 />
                 {product.discount && (
                     <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-md">
@@ -30,14 +62,18 @@ const ProductCard = ({ product }) => {
                 </button>
             </div>
             <div className="p-2.5">
-                <p className="text-sm font-medium truncate">{product.name}</p>
+                <p className="text-sm font-medium truncate">{product.title}</p>
                 <div className="flex justify-between items-center mt-1">
                     <div className="flex items-center">
-                        <span className="text-sm font-semibold text-button-green">{product.price.toFixed(2)}€</span>
+                        <span className="text-sm font-semibold text-button-green">
+                            {product.isDonation || product.price === '0' || product.price === 0
+                                ? 'Gratuit'
+                                : `${formatPrice(product.price)}€`}
+                        </span>
                         {product.originalPrice && (
                             <span className="text-xs text-gray-400 line-through ml-1">
-                {product.originalPrice.toFixed(2)}€
-              </span>
+                                {formatPrice(product.originalPrice)}€
+                            </span>
                         )}
                     </div>
                     <div className="text-xs text-gray-500 flex items-center">
@@ -52,7 +88,7 @@ const ProductCard = ({ product }) => {
                 {product.expirationDate && (
                     <div className="flex items-center mt-1 text-xs text-gray-500">
                         <FaRegClock className="mr-1" size={10} />
-                        <span>Expire {product.expirationDate}</span>
+                        <span>Expire {getExpirationText(product.expirationDate)}</span>
                     </div>
                 )}
             </div>
@@ -61,6 +97,8 @@ const ProductCard = ({ product }) => {
 };
 
 const ProductSection = ({ title, subtitle, seeAllLink, products, icon }) => {
+    if (!products || products.length === 0) return null;
+
     return (
         <div className="mb-6">
             <div className="flex justify-between items-center mb-3">
@@ -77,7 +115,7 @@ const ProductSection = ({ title, subtitle, seeAllLink, products, icon }) => {
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                 {products.map((product, index) => (
-                    <ProductCard key={index} product={product} />
+                    <ProductCard key={product.id || index} product={product} />
                 ))}
             </div>
         </div>
@@ -138,11 +176,11 @@ const FilterPanel = ({ isOpen, onClose, onApply }) => {
     const [selectedPreferences, setSelectedPreferences] = useState([]);
 
     const types = {
-        fruits: 'Fruits',
-        vegetables: 'Légumes',
-        prepared_meal: 'Plats préparés',
-        dairy_product: 'Produits laitiers',
-        baked_goods: 'Pâtisseries',
+        food: 'Alimentation',
+        beverage: 'Boisson',
+        bakery: 'Boulangerie',
+        dairy: 'Produits laitiers',
+        other: 'Autre',
     };
 
     const dietaryPreferences = [
@@ -274,153 +312,82 @@ const FilterPanel = ({ isOpen, onClose, onApply }) => {
 const Search = () => {
     const { user } = useAuth();
     const [isLoading, setIsLoading] = useState(true);
-    const [recommendAgain, setRecommendAgain] = useState([]);
-    const [lastChance, setLastChance] = useState([]);
-    const [veganTonight, setVeganTonight] = useState([]);
-    const [localTrends, setLocalTrends] = useState([]);
-    const [customized, setCustomized] = useState([]);
+    const [products, setProducts] = useState([]);
     const [searchResults, setSearchResults] = useState([]);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [error, setError] = useState(null);
     const [activeFilters, setActiveFilters] = useState({});
 
     useEffect(() => {
-        const fetchData = async () => {
-            setIsLoading(true);
+        const fetchProducts = async () => {
             try {
-                const recommendResponse = await getMockProducts('recommend');
-                setRecommendAgain(recommendResponse);
+                setIsLoading(true);
+                setError(null);
 
-                const lastChanceResponse = await getMockProducts('lastChance');
-                setLastChance(lastChanceResponse);
+                const response = await axiosConfig.get('/product/');
+                console.log('API Response:', response.data);
 
-                const veganResponse = await getMockProducts('vegan');
-                setVeganTonight(veganResponse);
+                let productsArray = [];
+                if (Array.isArray(response.data)) {
+                    productsArray = response.data;
+                } else if (response.data && typeof response.data === 'object') {
+                    if (response.data.products) {
+                        productsArray = response.data.products;
+                    } else if (response.data.data) {
+                        productsArray = response.data.data;
+                    } else {
+                        productsArray = [response.data];
+                    }
+                }
 
-                const trendsResponse = await getMockProducts('trends');
-                setLocalTrends(trendsResponse);
+                setProducts(productsArray);
 
-                const customResponse = await getMockProducts('custom');
-                setCustomized(customResponse);
             } catch (error) {
-                console.error("Erreur lors de la récupération des données:", error);
+                console.error("Erreur lors de la récupération des produits:", error);
+                setError("Impossible de charger les produits");
+                setProducts([]);
             } finally {
                 setIsLoading(false);
             }
         };
 
-        fetchData();
+        fetchProducts();
     }, []);
 
-    const getMockProducts = async (type) => {
-        await new Promise(resolve => setTimeout(resolve, 300));
+    console.log("there ", products)
 
-        const baseProducts = [
-            {
-                name: "Salade César",
-                price: 3.99,
-                originalPrice: 6.99,
-                color: '4ade80',
-                distance: 1.2,
-                expirationDate: "aujourd'hui",
-                discount: 40
-            },
-            {
-                name: "Lasagnes à la bolognaise",
-                price: 4.50,
-                originalPrice: 7.99,
-                color: 'ef4444',
-                distance: 0.8,
-                expirationDate: "demain",
-                discount: 35
-            },
-            {
-                name: "Quinoa Bowl aux légumes",
-                price: 5.99,
-                originalPrice: 8.99,
-                color: 'd8b4fe',
-                distance: 1.5,
-                expirationDate: "dans 2 jours",
-                discount: 30,
-                isFavorite: true
-            },
-            {
-                name: "Poulet rôti et pommes de terre",
-                price: 6.50,
-                originalPrice: 9.99,
-                color: 'fcd34d',
-                distance: 0.5,
-                expirationDate: "aujourd'hui",
-                discount: 35
-            },
-            {
-                name: "Sushi Mix Box",
-                price: 7.99,
-                originalPrice: 12.99,
-                color: '06b6d4',
-                distance: 2.0,
-                expirationDate: "aujourd'hui",
-                discount: 40
-            }
-        ];
+    const getProductsByCategory = (category) => {
+        if (!products || products.length === 0) return [];
 
-        switch(type) {
+        switch(category) {
             case 'lastChance':
-                return baseProducts.map(p => ({...p, expirationDate: "aujourd'hui"}));
+                return products.filter(product => {
+                    if (!product.expirationDate) return false;
+                    const today = new Date();
+                    const expDate = new Date(product.expirationDate);
+                    const diffTime = expDate - today;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    return diffDays <= 1;
+                });
+
+            case 'donations':
+                return products.filter(product =>
+                    product.isDonation || product.price === '0' || product.price === 0
+                );
+
             case 'vegan':
-                return [
-                    {
-                        name: "Buddha Bowl Vegan",
-                        price: 5.99,
-                        originalPrice: 8.99,
-                        color: '84cc16',
-                        distance: 1.3,
-                        expirationDate: "demain",
-                        discount: 30
-                    },
-                    {
-                        name: "Wraps aux légumes",
-                        price: 4.50,
-                        originalPrice: 6.99,
-                        color: 'bef264',
-                        distance: 0.7,
-                        expirationDate: "aujourd'hui",
-                        discount: 35
-                    },
-                    {
-                        name: "Curry de légumes",
-                        price: 6.50,
-                        originalPrice: 9.99,
-                        color: 'fde047',
-                        distance: 1.1,
-                        expirationDate: "dans 2 jours",
-                        discount: 30,
-                        isFavorite: true
-                    },
-                    {
-                        name: "Salade vegan complète",
-                        price: 4.99,
-                        originalPrice: 7.99,
-                        color: 'a3e635',
-                        distance: 1.8,
-                        expirationDate: "demain",
-                        discount: 40
-                    },
-                    {
-                        name: "Plat de falafels",
-                        price: 5.50,
-                        originalPrice: 8.50,
-                        color: '65a30d',
-                        distance: 0.9,
-                        expirationDate: "aujourd'hui",
-                        discount: 35
-                    }
-                ];
-            case 'trends':
-                return baseProducts.map(p => ({...p, discount: 50}));
-            case 'custom':
-                return baseProducts.slice(0, 4).map(p => ({...p, isFavorite: true}));
+                return products.filter(product =>
+                    product.dietaryTags &&
+                    product.dietaryTags.some(tag =>
+                        tag.name && tag.name.toLowerCase().includes('végétalien')
+                    )
+                );
+
+            case 'recent':
+                return products.slice(0, 5);
+
             default:
-                return baseProducts;
+                return products.slice(0, 5);
         }
     };
 
@@ -430,18 +397,10 @@ const Search = () => {
             return;
         }
 
-        const allProducts = [
-            ...recommendAgain,
-            ...lastChance,
-            ...veganTonight,
-            ...localTrends,
-            ...customized
-        ];
-
-        const uniqueProducts = Array.from(new Map(allProducts.map(item => [item.name, item])).values());
-
-        const results = uniqueProducts.filter(product =>
-            product.name.toLowerCase().includes(term.toLowerCase())
+        const results = products.filter(product =>
+            (product.title && product.title.toLowerCase().includes(term.toLowerCase())) ||
+            (product.name && product.name.toLowerCase().includes(term.toLowerCase())) ||
+            (product.description && product.description.toLowerCase().includes(term.toLowerCase()))
         );
 
         setSearchResults(results);
@@ -450,31 +409,34 @@ const Search = () => {
     const handleApplyFilters = (filters) => {
         setActiveFilters(filters);
 
-        const allProducts = [
-            ...recommendAgain,
-            ...lastChance,
-            ...veganTonight,
-            ...localTrends,
-            ...customized
-        ];
-
-        const uniqueProducts = Array.from(new Map(allProducts.map(item => [item.name, item])).values());
-
-        let filteredProducts = [...uniqueProducts];
+        let filteredProducts = [...products];
 
         if (filters.type) {
             filteredProducts = filteredProducts.filter(p => p.type === filters.type);
         }
 
         if (filters.maxPrice) {
-            filteredProducts = filteredProducts.filter(p => p.price <= filters.maxPrice);
+            filteredProducts = filteredProducts.filter(p => {
+                const price = parseFloat(p.price);
+                return price <= filters.maxPrice;
+            });
         }
 
         if (filters.expirationDate) {
             filteredProducts = filteredProducts.filter(p => {
-                if (p.expirationDate === "aujourd'hui") return true;
-                if (p.expirationDate === "demain") return true;
-                return false;
+                if (!p.expirationDate) return false;
+                const expDate = new Date(p.expirationDate);
+                const filterDate = new Date(filters.expirationDate);
+                return expDate <= filterDate;
+            });
+        }
+
+        if (filters.dietaryPreferences && filters.dietaryPreferences.length > 0) {
+            filteredProducts = filteredProducts.filter(p => {
+                if (!p.dietaryTags) return false;
+                return p.dietaryTags.some(tag =>
+                    filters.dietaryPreferences.includes(tag.id)
+                );
             });
         }
 
@@ -483,11 +445,33 @@ const Search = () => {
 
     if (isLoading) {
         return (
-            <div className="flex flex-col h-screen">
-                <div className="flex-grow p-4 flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-button-green"></div>
+            <Layout>
+                <div className="flex flex-col h-screen">
+                    <div className="flex-grow p-4 flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-button-green"></div>
+                    </div>
                 </div>
-            </div>
+            </Layout>
+        );
+    }
+
+    if (error) {
+        return (
+            <Layout>
+                <div className="flex flex-col h-screen">
+                    <div className="flex-grow p-4 flex items-center justify-center">
+                        <div className="text-center">
+                            <p className="text-red-500 mb-4">{error}</p>
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="bg-button-green text-white px-4 py-2 rounded"
+                            >
+                                Réessayer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </Layout>
         );
     }
 
@@ -511,56 +495,64 @@ const Search = () => {
                     {searchResults.length > 0 ? (
                         <div className="mb-6">
                             <div className="flex justify-between items-center mb-3">
-                                <h2 className="text-lg font-semibold">Résultats</h2>
+                                <h2 className="text-lg font-semibold">
+                                    Résultats ({searchResults.length})
+                                </h2>
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 {searchResults.map((product, index) => (
-                                    <ProductCard key={`search-${index}`} product={product} />
+                                    <ProductCard key={product.id || `search-${index}`} product={product} />
                                 ))}
                             </div>
                         </div>
                     ) : (
                         <>
                             <ProductSection
-                                title="Recommander à nouveau"
-                                subtitle="Commandez à nouveau chez vos vendeurs préférés"
-                                seeAllLink="/search/recommend"
-                                products={recommendAgain}
-                                icon={<IoMdHeart className="text-button-green mr-2" size={20} />}
-                            />
-
-                            <ProductSection
                                 title="Dernière chance"
-                                subtitle="Produits qui expirent aujourd'hui"
+                                subtitle="Produits qui expirent bientôt"
                                 seeAllLink="/search/last-chance"
-                                products={lastChance}
+                                products={getProductsByCategory('lastChance')}
                                 icon={<FaRegClock className="text-button-green mr-2" size={20} />}
                             />
 
                             <ProductSection
-                                title="Ce soir je mange vegan"
+                                title="Dons gratuits"
+                                subtitle="Produits offerts généreusement"
+                                seeAllLink="/search/donations"
+                                products={getProductsByCategory('donations')}
+                                icon={<IoMdHeart className="text-button-green mr-2" size={20} />}
+                            />
+
+                            <ProductSection
+                                title="Options végétaliennes"
                                 subtitle="Découvrez nos options 100% végétales"
                                 seeAllLink="/search/vegan"
-                                products={veganTonight}
+                                products={getProductsByCategory('vegan')}
                                 icon={<IoLeafOutline className="text-button-green mr-2" size={20} />}
                             />
 
                             <ProductSection
-                                title="Tendances locales"
-                                subtitle="Populaire près de chez vous"
-                                seeAllLink="/search/trends"
-                                products={localTrends}
+                                title="Récemment ajoutés"
+                                subtitle="Les dernières offres près de chez vous"
+                                seeAllLink="/search/recent"
+                                products={getProductsByCategory('recent')}
                                 icon={<FaMapMarkerAlt className="text-button-green mr-2" size={20} />}
                             />
 
                             <ProductSection
-                                title="Sur mesure pour vous"
-                                subtitle="Basé sur vos préférences et votre historique"
-                                seeAllLink="/search/custom"
-                                products={customized}
+                                title="Tous les produits"
+                                subtitle="Découvrez toute notre sélection"
+                                seeAllLink="/offers/all"
+                                products={products.slice(0, 10)}
                                 icon={<IoMdHeart className="text-button-green mr-2" size={20} />}
                             />
                         </>
+                    )}
+
+                    {products.length === 0 && !isLoading && (
+                        <div className="text-center py-8">
+                            <p className="text-gray-500">Aucun produit disponible pour le moment</p>
+                        </div>
                     )}
                 </div>
             </div>

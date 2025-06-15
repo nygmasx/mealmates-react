@@ -53,7 +53,7 @@ const FilterPanel = ({isOpen, onClose}) => {
     const fetchDietaryPreferences = async () => {
         try {
             axiosConfig.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-            const response = await axiosConfig.get('/dietary-preferences');
+            const response = await axiosConfig.get('/dietary-preferences/');
             setDietaryPreferences(response.data);
         } catch (error) {
             console.error("Erreur lors de la récupération des préférences alimentaires:", error);
