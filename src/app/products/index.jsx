@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input";
 import Layout from '../Layout';
 
 const ProductCard = ({ product }) => {
-    // Fonction pour formater le prix
     const formatPrice = (price) => {
         if (typeof price === 'string') {
             return parseFloat(price).toFixed(2);
@@ -20,7 +19,6 @@ const ProductCard = ({ product }) => {
         return price.toFixed(2);
     };
 
-    // Fonction pour calculer la date d'expiration relative
     const getExpirationText = (expirationDate) => {
         if (!expirationDate) return null;
 
@@ -35,13 +33,10 @@ const ProductCard = ({ product }) => {
         return "expiré";
     };
 
-    // URL de l'image - utiliser l'image réelle ou placeholder
     const getImageUrl = (product) => {
         if (product.images && product.images.length > 0) {
-            // Si vous avez des images réelles
-            return `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/${product.images[0]}`;
+            return `https://apimates.testingtest.fr/${product.images[0]}`;
         }
-        // Fallback vers placeholder
         const productName = product.title || product.name || 'Produit';
         return `https://placehold.co/400x200/e2e8f0/ffffff?text=${encodeURIComponent(productName.split(' ')[0])}`;
     };
@@ -50,11 +45,10 @@ const ProductCard = ({ product }) => {
         <div className="min-w-[150px] max-w-[170px] flex-shrink-0 shadow-md rounded-xl overflow-hidden bg-white">
             <div className="relative">
                 <img
-                    src={`https://apimates.testingtest.fr/${product.images[0]}`}
+                    src={getImageUrl(product)}
                     alt={product.title || product.name}
                     className="w-full h-28 object-cover"
                     onError={(e) => {
-                        // Fallback si l'image ne charge pas
                         e.target.src = `https://placehold.co/400x200/e2e8f0/ffffff?text=${encodeURIComponent((product.title || product.name || 'Produit').split(' ')[0])}`;
                     }}
                 />
@@ -333,18 +327,15 @@ const Search = () => {
                 const response = await axiosConfig.get('/product/');
                 console.log('API Response:', response.data);
 
-                // Vérifier si response.data est un tableau ou un objet
                 let productsArray = [];
                 if (Array.isArray(response.data)) {
                     productsArray = response.data;
                 } else if (response.data && typeof response.data === 'object') {
-                    // Si c'est un objet, essayer de trouver le tableau de produits
                     if (response.data.products) {
                         productsArray = response.data.products;
                     } else if (response.data.data) {
                         productsArray = response.data.data;
                     } else {
-                        // Si c'est un seul objet produit, le mettre dans un tableau
                         productsArray = [response.data];
                     }
                 }
@@ -365,13 +356,11 @@ const Search = () => {
 
     console.log("there ", products)
 
-    // Fonctions pour catégoriser les produits
     const getProductsByCategory = (category) => {
         if (!products || products.length === 0) return [];
 
         switch(category) {
             case 'lastChance':
-                // Produits qui expirent aujourd'hui ou demain
                 return products.filter(product => {
                     if (!product.expirationDate) return false;
                     const today = new Date();
@@ -382,13 +371,11 @@ const Search = () => {
                 });
 
             case 'donations':
-                // Produits gratuits/donations
                 return products.filter(product =>
                     product.isDonation || product.price === '0' || product.price === 0
                 );
 
             case 'vegan':
-                // Produits avec des tags végétaliens (si vous avez cette info)
                 return products.filter(product =>
                     product.dietaryTags &&
                     product.dietaryTags.some(tag =>
@@ -397,7 +384,6 @@ const Search = () => {
                 );
 
             case 'recent':
-                // Produits récemment ajoutés
                 return products.slice(0, 5);
 
             default:
@@ -556,14 +542,12 @@ const Search = () => {
                             <ProductSection
                                 title="Tous les produits"
                                 subtitle="Découvrez toute notre sélection"
-                                seeAllLink="/search/all"
+                                seeAllLink="/offers/all"
                                 products={products.slice(0, 10)}
                                 icon={<IoMdHeart className="text-button-green mr-2" size={20} />}
                             />
                         </>
                     )}
-
-
 
                     {products.length === 0 && !isLoading && (
                         <div className="text-center py-8">

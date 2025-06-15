@@ -25,8 +25,8 @@ const Navbar = () => {
                 </Link>
 
                 <Link
-                    to="/search"
-                    className={`flex flex-col items-center justify-center ${isActive('/search') ? 'text-green-600' : 'text-gray-600'}`}
+                    to="/offers"
+                    className={`flex flex-col items-center justify-center ${isActive('/offers') ? 'text-green-600' : 'text-gray-600'}`}
                 >
                     <RiMenuSearchLine className="text-3xl mb-1"/>
                     <span className="text-xs">Rechercher</span>
