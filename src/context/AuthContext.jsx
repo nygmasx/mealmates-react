@@ -19,7 +19,8 @@ export const AuthProvider = ({ children }) => {
                 try {
                     const response = await axiosConfig.get("/user/profile");
 
-                    setUser(response.data);
+                    // Include token in user object
+                    setUser({ ...response.data, token });
                     setIsAuthenticated(true);
                 } catch (error) {
                     console.error("Auth check failed:", error);
@@ -48,16 +49,20 @@ export const AuthProvider = ({ children }) => {
     };
 
     const login = async (email, password) => {
+        console.log(email, password)
         const response = await axiosConfig.post("/login_check", {
             email,
             password
         });
+        console.log('This response : ', response)
 
         const token = response.data.token;
 
+        console.log(token)
+
         axiosConfig.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-        const userResponse = await axiosConfig.get("/user/profile/");
+        const userResponse = await axiosConfig.get("/user/profile");
 
         if (!userResponse.data.isVerified) {
             delete axiosConfig.defaults.headers.common["Authorization"];
@@ -66,10 +71,13 @@ export const AuthProvider = ({ children }) => {
         }
 
         localStorage.setItem("token", token);
-        setUser(userResponse.data);
+
+        // Include token in user object
+        const userWithToken = { ...userResponse.data, token };
+        setUser(userWithToken);
         setIsAuthenticated(true);
 
-        return userResponse.data;
+        return userWithToken;
     };
 
     const resendVerificationEmail = async (email) => {

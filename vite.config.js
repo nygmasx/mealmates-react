@@ -19,7 +19,7 @@ export default defineConfig({
         port: 5173,
         proxy: {
             '/api': {
-                target: 'https://groupe-4.lycee-stvincent.net:82',
+                target: 'https://apimates.testingtest.fr',
                 changeOrigin: true,
                 secure: true,
             }

@@ -1,16 +1,17 @@
 import axios from 'axios';
 
 const instance = axios.create({
-    baseURL: 'https://groupe-4.lycee-stvincent.net:82/api',
+    baseURL: 'https://apimates.testingtest.fr/api',
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-    }
+    },
 });
 
 instance.interceptors.request.use(
     (config) => {
+        console.log('Request:', config.url, config.method);
         const token = localStorage.getItem('token');
         if (token) {
             config.headers['Authorization'] = `Bearer ${token}`;
@@ -18,20 +19,20 @@ instance.interceptors.request.use(
         return config;
     },
     (error) => {
+        console.error('Request error:', error);
         return Promise.reject(error);
     }
 );
 
 instance.interceptors.response.use(
     (response) => {
+        console.log('Response:', response.status);
         return response;
     },
     (error) => {
+        console.error('Response error:', error.response?.status, error.message);
         if (error.response && error.response.status === 401) {
-            // If we receive a 401 Unauthorized, clear the token
             localStorage.removeItem('token');
-
-            // Redirect to login if it's an auth error
             if (window.location.pathname !== '/login') {
                 window.location.href = '/login';
             }
