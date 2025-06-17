@@ -1,5 +1,5 @@
-import {useState, useEffect, useRef} from "react";
-import {Search, Send, Paperclip, MoreVertical, ArrowLeft, Image} from "lucide-react";
+import {useState, useEffect, useRef, useCallback, useMemo, memo} from "react";
+import {Search, Send, Paperclip, MoreVertical, ArrowLeft, Image, AlertCircle, Check, CheckCheck, Plus, X, UserPlus} from "lucide-react";
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
 import Layout from "../Layout";
@@ -39,18 +39,26 @@ const useChat = () => {
     const [loading, setLoading] = useState(false);
     const [lastMessageId, setLastMessageId] = useState(null);
     const [unreadCounts, setUnreadCounts] = useState({});
+    const [error, setError] = useState(null);
+    const [sendingMessage, setSendingMessage] = useState(false);
+    const [typingUsers, setTypingUsers] = useState({});
+    const [users, setUsers] = useState([]);
+    const [searchingUsers, setSearchingUsers] = useState(false);
 
-    const loadConversations = async () => {
+    const loadConversations = useCallback(async () => {
         try {
+            setError(null);
             const response = await axiosConfig.get('/chat/list');
             setConversations(response.data);
         } catch (error) {
             console.error('Error loading conversations:', error);
+            setError('Impossible de charger les conversations');
         }
-    };
+    }, []);
 
-    const loadMessages = async (chatId) => {
+    const loadMessages = useCallback(async (chatId) => {
         setLoading(true);
+        setError(null);
         try {
             const response = await axiosConfig.get(`/chat/${chatId}/messages`);
             setMessages(response.data);
@@ -61,12 +69,13 @@ const useChat = () => {
             }
         } catch (error) {
             console.error('Error loading messages:', error);
+            setError('Impossible de charger les messages');
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
-    const pollNewMessages = async (chatId) => {
+    const pollNewMessages = useCallback(async (chatId) => {
         if (!chatId || !lastMessageId) return;
 
         try {
@@ -82,21 +91,23 @@ const useChat = () => {
         } catch (error) {
             console.error('Error polling messages:', error);
         }
-    };
+    }, [lastMessageId]);
 
-    const pollUnreadCounts = async () => {
+    const pollUnreadCounts = useCallback(async () => {
         try {
             const response = await axiosConfig.get('/chat/unread-counts');
             setUnreadCounts(response.data);
         } catch (error) {
             console.error('Error polling unread counts:', error);
         }
-    };
+    }, []);
 
-    const sendMessage = async (chatId, content, type = 'text', attachments = null) => {
+    const sendMessage = useCallback(async (chatId, content, type = 'text', attachments = null) => {
         const payload = {content, type};
         if (attachments) payload.attachments = attachments;
 
+        setSendingMessage(true);
+        setError(null);
         try {
             const response = await axiosConfig.post(`/chat/${chatId}/messages`, payload);
 
@@ -107,10 +118,14 @@ const useChat = () => {
             }
         } catch (error) {
             console.error('Error sending message:', error);
+            setError('Impossible d\'envoyer le message');
+            throw error;
+        } finally {
+            setSendingMessage(false);
         }
-    };
+    }, []);
 
-    const markAsRead = async (chatId) => {
+    const markAsRead = useCallback(async (chatId) => {
         try {
             await axiosConfig.post(`/chat/${chatId}/mark-read`);
             // Update unread count locally
@@ -118,13 +133,54 @@ const useChat = () => {
         } catch (error) {
             console.error('Error marking as read:', error);
         }
-    };
+    }, []);
+
+    const searchUsers = useCallback(async (query) => {
+        if (!query.trim()) {
+            setUsers([]);
+            return;
+        }
+
+        setSearchingUsers(true);
+        try {
+            const response = await axiosConfig.get('/users/search', {
+                params: { q: query }
+            });
+            setUsers(response.data);
+        } catch (error) {
+            console.error('Error searching users:', error);
+            setError('Impossible de rechercher les utilisateurs');
+        } finally {
+            setSearchingUsers(false);
+        }
+    }, []);
+
+    const createConversation = useCallback(async (userId, initialMessage = '') => {
+        try {
+            setError(null);
+            const response = await axiosConfig.post('/chat/create', {
+                userId,
+                message: initialMessage
+            });
+            
+            // Refresh conversations list
+            await loadConversations();
+            
+            return response.data;
+        } catch (error) {
+            console.error('Error creating conversation:', error);
+            setError('Impossible de créer la conversation');
+            throw error;
+        }
+    }, [loadConversations]);
 
     return {
         conversations,
         messages,
         loading,
         unreadCounts,
+        error,
+        sendingMessage,
         loadConversations,
         loadMessages,
         sendMessage,
@@ -132,11 +188,17 @@ const useChat = () => {
         pollNewMessages,
         pollUnreadCounts,
         setMessages,
-        setUnreadCounts
+        setUnreadCounts,
+        typingUsers,
+        setTypingUsers,
+        users,
+        searchingUsers,
+        searchUsers,
+        createConversation
     };
 };
 
-const ConversationItem = ({conversation, isActive, onClick, unreadCount}) => (
+const ConversationItem = memo(({conversation, isActive, onClick, unreadCount}) => (
     <div
         className={`flex items-center p-3 cursor-pointer hover:bg-gray-50 ${isActive ? 'bg-[#53B175]/10' : ''}`}
         onClick={onClick}
@@ -163,10 +225,24 @@ const ConversationItem = ({conversation, isActive, onClick, unreadCount}) => (
             <p className="text-sm text-gray-500 truncate">{conversation.lastMessage}</p>
         </div>
     </div>
-);
+));
 
-const Message = ({message, currentUser}) => {
-    const isMine = message.sender?.id === currentUser?.id;
+const Message = memo(({message, currentUser}) => {
+    const isMine = useMemo(() => message.sender?.id === currentUser?.id, [message.sender?.id, currentUser?.id]);
+
+    const getStatusIcon = () => {
+        if (!isMine) return null;
+        switch (message.status) {
+            case 'sent':
+                return <Check size={12} className="inline ml-1" />;
+            case 'delivered':
+                return <CheckCheck size={12} className="inline ml-1" />;
+            case 'read':
+                return <CheckCheck size={12} className="inline ml-1 text-blue-400" />;
+            default:
+                return null;
+        }
+    };
 
     return (
         <div className={`flex mb-4 ${isMine ? 'justify-end' : 'justify-start'}`}>
@@ -185,18 +261,212 @@ const Message = ({message, currentUser}) => {
                         ))}
                     </div>
                 )}
-                <span className={`text-xs block mt-1 ${
+                <div className={`text-xs mt-1 flex items-center justify-end ${
                     isMine ? 'text-[#53B175]/80' : 'text-gray-500'
                 }`}>
-                    {new Date(message.createdAt).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    })}
-                </span>
+                    <span>
+                        {new Date(message.createdAt).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })}
+                    </span>
+                    {getStatusIcon()}
+                </div>
             </div>
         </div>
     );
-};
+});
+
+const NewConversationModal = memo(({ isOpen, onClose, onCreateConversation, users, searchingUsers, onSearchUsers }) => {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [initialMessage, setInitialMessage] = useState('');
+    const [creating, setCreating] = useState(false);
+    const searchTimeoutRef = useRef(null);
+
+    const handleSearchChange = useCallback((e) => {
+        const query = e.target.value;
+        setSearchQuery(query);
+        
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+        
+        searchTimeoutRef.current = setTimeout(() => {
+            onSearchUsers(query);
+        }, 300);
+    }, [onSearchUsers]);
+
+    const handleCreateConversation = useCallback(async () => {
+        if (!selectedUser) return;
+        
+        setCreating(true);
+        try {
+            const conversation = await onCreateConversation(selectedUser.id, initialMessage);
+            onClose();
+            // Reset form
+            setSearchQuery('');
+            setSelectedUser(null);
+            setInitialMessage('');
+        } catch (error) {
+            // Error handled in parent component
+        } finally {
+            setCreating(false);
+        }
+    }, [selectedUser, initialMessage, onCreateConversation, onClose]);
+
+    const handleClose = useCallback(() => {
+        setSearchQuery('');
+        setSelectedUser(null);
+        setInitialMessage('');
+        onClose();
+    }, [onClose]);
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold">Nouvelle conversation</h2>
+                    <Button variant="ghost" size="icon" onClick={handleClose}>
+                        <X size={20} />
+                    </Button>
+                </div>
+                
+                <div className="space-y-4">
+                    <div>
+                        <label className="text-sm font-medium text-gray-700 mb-2 block">
+                            Rechercher un utilisateur
+                        </label>
+                        <div className="relative">
+                            <Input
+                                type="text"
+                                placeholder="Nom d'utilisateur ou email..."
+                                value={searchQuery}
+                                onChange={handleSearchChange}
+                                className="pl-10"
+                            />
+                            <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+                        </div>
+                    </div>
+                    
+                    {searchingUsers && (
+                        <div className="flex justify-center py-2">
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#53B175]"></div>
+                        </div>
+                    )}
+                    
+                    {users.length > 0 && (
+                        <div className="max-h-40 overflow-y-auto border rounded-md">
+                            {users.map(user => (
+                                <div
+                                    key={user.id}
+                                    className={`p-3 cursor-pointer hover:bg-gray-50 flex items-center space-x-3 ${
+                                        selectedUser?.id === user.id ? 'bg-[#53B175]/10' : ''
+                                    }`}
+                                    onClick={() => setSelectedUser(user)}
+                                >
+                                    <div className="w-8 h-8 rounded-full bg-[#53B175]/10 flex items-center justify-center">
+                                        <UserPlus size={16} className="text-[#53B175]" />
+                                    </div>
+                                    <div>
+                                        <p className="font-medium text-sm">{user.name}</p>
+                                        <p className="text-xs text-gray-500">{user.email}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    
+                    {selectedUser && (
+                        <div>
+                            <label className="text-sm font-medium text-gray-700 mb-2 block">
+                                Message initial (optionnel)
+                            </label>
+                            <textarea
+                                placeholder="Écrivez votre premier message..."
+                                value={initialMessage}
+                                onChange={(e) => setInitialMessage(e.target.value)}
+                                className="w-full p-3 border rounded-md resize-none focus:border-[#53B175] focus:ring-1 focus:ring-[#53B175]"
+                                rows={3}
+                            />
+                        </div>
+                    )}
+                    
+                    <div className="flex space-x-3 pt-4">
+                        <Button
+                            variant="outline"
+                            onClick={handleClose}
+                            className="flex-1"
+                        >
+                            Annuler
+                        </Button>
+                        <Button
+                            onClick={handleCreateConversation}
+                            disabled={!selectedUser || creating}
+                            className="flex-1 bg-[#53B175] hover:bg-[#53B175]/90"
+                        >
+                            {creating ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            ) : null}
+                            Créer
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+});
+
+const DateSeparator = memo(({ date }) => {
+    const formatDate = (date) => {
+        const today = new Date();
+        const messageDate = new Date(date);
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        if (messageDate.toDateString() === today.toDateString()) {
+            return "Aujourd'hui";
+        } else if (messageDate.toDateString() === yesterday.toDateString()) {
+            return "Hier";
+        } else {
+            return messageDate.toLocaleDateString('fr-FR', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+    };
+
+    return (
+        <div className="flex items-center justify-center my-4">
+            <div className="px-3 py-1 bg-gray-200 rounded-full text-xs text-gray-600">
+                {formatDate(date)}
+            </div>
+        </div>
+    );
+});
+
+const TypingIndicator = memo(({ typingUsers }) => {
+    if (!typingUsers || typingUsers.length === 0) return null;
+
+    return (
+        <div className="flex items-center space-x-1 px-4 py-2 text-gray-500">
+            <div className="flex space-x-1">
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+            </div>
+            <span className="text-sm ml-2">
+                {typingUsers.length === 1 
+                    ? `${typingUsers[0]} écrit...` 
+                    : `${typingUsers.length} personnes écrivent...`}
+            </span>
+        </div>
+    );
+});
 
 export default function MessagerieApp() {
     const [selectedConversation, setSelectedConversation] = useState(null);
@@ -204,19 +474,34 @@ export default function MessagerieApp() {
     const [searchQuery, setSearchQuery] = useState("");
     const [currentUser, setCurrentUser] = useState(null);
     const [isPollingEnabled, setIsPollingEnabled] = useState(true);
+    const messagesEndRef = useRef(null);
+    const typingTimeoutRef = useRef(null);
+    const fileInputRef = useRef(null);
+    const [uploadingFile, setUploadingFile] = useState(false);
+    const searchDebounceRef = useRef(null);
+    const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+    const [showNewConversationModal, setShowNewConversationModal] = useState(false);
 
     const {
         conversations,
         messages,
         loading,
         unreadCounts,
+        error,
+        sendingMessage,
         loadConversations,
         loadMessages,
         sendMessage,
         markAsRead,
         pollNewMessages,
         pollUnreadCounts,
-        setUnreadCounts
+        setUnreadCounts,
+        typingUsers,
+        setTypingUsers,
+        users,
+        searchingUsers,
+        searchUsers,
+        createConversation
     } = useChat();
 
     // Poll for new messages in the selected conversation
@@ -248,7 +533,119 @@ export default function MessagerieApp() {
 
     useEffect(() => {
         loadConversations();
+    }, [loadConversations]);
+
+    // Auto-scroll to bottom when new messages arrive
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
+    // Handle typing indicator
+    const handleTyping = useCallback(() => {
+        if (!selectedConversation) return;
+
+        // Clear previous timeout
+        if (typingTimeoutRef.current) {
+            clearTimeout(typingTimeoutRef.current);
+        }
+
+        // Simulate sending typing indicator to server
+        // In a real app, you'd send this to your WebSocket or API
+        console.log('User is typing in conversation:', selectedConversation.id);
+
+        // Stop typing after 3 seconds of inactivity
+        typingTimeoutRef.current = setTimeout(() => {
+            console.log('User stopped typing');
+        }, 3000);
+    }, [selectedConversation]);
+
+    // Handle input change with typing indicator
+    const handleMessageChange = useCallback((e) => {
+        setNewMessage(e.target.value);
+        handleTyping();
+    }, [handleTyping]);
+
+    // Debounced search
+    useEffect(() => {
+        if (searchDebounceRef.current) {
+            clearTimeout(searchDebounceRef.current);
+        }
+        
+        searchDebounceRef.current = setTimeout(() => {
+            setDebouncedSearchQuery(searchQuery);
+        }, 300);
+
+        return () => {
+            if (searchDebounceRef.current) {
+                clearTimeout(searchDebounceRef.current);
+            }
+        };
+    }, [searchQuery]);
+
+    // Handle file upload
+    const handleFileUpload = useCallback(async (file) => {
+        if (!selectedConversation || !file) return;
+
+        setUploadingFile(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('type', 'file');
+            
+            // In a real app, you'd upload the file first and get a URL
+            // For now, we'll simulate with the file name
+            await sendMessage(selectedConversation.id, `Fichier: ${file.name}`, 'file', [{
+                name: file.name,
+                size: file.size,
+                type: file.type
+            }]);
+        } catch (error) {
+            console.error('Error uploading file:', error);
+        } finally {
+            setUploadingFile(false);
+        }
+    }, [selectedConversation, sendMessage]);
+
+    const handleFileSelect = useCallback(() => {
+        fileInputRef.current?.click();
     }, []);
+
+    const handleFileChange = useCallback((e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            handleFileUpload(file);
+        }
+    }, [handleFileUpload]);
+
+    const handleCreateConversation = useCallback(async (userId, initialMessage) => {
+        const conversation = await createConversation(userId, initialMessage);
+        if (conversation) {
+            setSelectedConversation(conversation);
+            if (conversation.id) {
+                await loadMessages(conversation.id);
+            }
+        }
+        return conversation;
+    }, [createConversation, loadMessages]);
+
+    // Group messages by date
+    const groupedMessages = useMemo(() => {
+        const groups = [];
+        let currentDate = null;
+
+        messages.forEach((message) => {
+            const messageDate = new Date(message.createdAt).toDateString();
+            
+            if (messageDate !== currentDate) {
+                groups.push({ type: 'date', date: message.createdAt });
+                currentDate = messageDate;
+            }
+            
+            groups.push({ type: 'message', data: message });
+        });
+
+        return groups;
+    }, [messages]);
 
     const handleSelectConversation = async (conversation) => {
         setSelectedConversation(conversation);
@@ -256,15 +653,21 @@ export default function MessagerieApp() {
         await markAsRead(conversation.id);
     };
 
-    const handleSendMessage = async () => {
-        if (!newMessage.trim() || !selectedConversation) return;
+    const handleSendMessage = useCallback(async () => {
+        if (!newMessage.trim() || !selectedConversation || sendingMessage) return;
 
-        await sendMessage(selectedConversation.id, newMessage);
-        setNewMessage("");
-    };
+        try {
+            await sendMessage(selectedConversation.id, newMessage);
+            setNewMessage("");
+        } catch (error) {
+            // Error is already handled in sendMessage
+        }
+    }, [newMessage, selectedConversation, sendMessage, sendingMessage]);
 
-    const filteredConversations = conversations.filter(conv =>
-        conv.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredConversations = useMemo(() => 
+        conversations.filter(conv =>
+            conv.name?.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
+        ), [conversations, debouncedSearchQuery]
     );
 
     return (
@@ -273,8 +676,18 @@ export default function MessagerieApp() {
                 <div className="flex flex-1 overflow-hidden">
                     <div className={`w-full md:w-80 border-r ${selectedConversation && 'hidden md:block'}`}>
                         <div className="p-4 border-b">
-                            <h1 className="text-xl font-bold text-gray-800">Messages</h1>
-                            <div className="mt-3 relative">
+                            <div className="flex items-center justify-between mb-3">
+                                <h1 className="text-xl font-bold text-gray-800">Messages</h1>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setShowNewConversationModal(true)}
+                                    className="text-[#53B175] hover:bg-[#53B175]/10"
+                                >
+                                    <Plus size={20} />
+                                </Button>
+                            </div>
+                            <div className="relative">
                                 <Input
                                     type="text"
                                     placeholder="Rechercher"
@@ -334,14 +747,34 @@ export default function MessagerieApp() {
                                             <div
                                                 className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#53B175]"></div>
                                         </div>
+                                    ) : error ? (
+                                        <div className="flex flex-col items-center justify-center h-full text-center">
+                                            <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
+                                            <h3 className="text-lg font-medium text-gray-900 mb-2">Erreur</h3>
+                                            <p className="text-gray-500 mb-4">{error}</p>
+                                            <Button 
+                                                onClick={() => selectedConversation && loadMessages(selectedConversation.id)}
+                                                variant="outline"
+                                            >
+                                                Réessayer
+                                            </Button>
+                                        </div>
                                     ) : (
-                                        messages.map(message => (
-                                            <Message
-                                                key={message.id}
-                                                message={message}
-                                                currentUser={currentUser}
-                                            />
-                                        ))
+                                        <>
+                                            {groupedMessages.map((item, index) => 
+                                                item.type === 'date' ? (
+                                                    <DateSeparator key={`date-${index}`} date={item.date} />
+                                                ) : (
+                                                    <Message
+                                                        key={item.data.id}
+                                                        message={item.data}
+                                                        currentUser={currentUser}
+                                                    />
+                                                )
+                                            )}
+                                            <TypingIndicator typingUsers={typingUsers[selectedConversation?.id]} />
+                                            <div ref={messagesEndRef} />
+                                        </>
                                     )}
                                 </div>
 
@@ -352,19 +785,39 @@ export default function MessagerieApp() {
                                             placeholder="Écrivez un message..."
                                             className="w-full rounded-full border-gray-200 focus:border-[#53B175] focus:ring-1 focus:ring-[#53B175] transition-all duration-200 shadow-sm hover:border-gray-300"
                                             value={newMessage}
-                                            onChange={(e) => setNewMessage(e.target.value)}
+                                            onChange={handleMessageChange}
                                             onKeyPress={(e) => {
                                                 if (e.key === 'Enter') handleSendMessage();
                                             }}
                                         />
                                     </div>
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleFileChange}
+                                        className="hidden"
+                                        accept="*/*"
+                                    />
                                     <div className="flex gap-1">
-                                        <Button variant="ghost" size="icon"
-                                                className="text-gray-500 hover:text-[#53B175] hover:bg-[#53B175]/10 transition-colors duration-200">
-                                            <Paperclip size={20}/>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon"
+                                            className="text-gray-500 hover:text-[#53B175] hover:bg-[#53B175]/10 transition-colors duration-200"
+                                            onClick={handleFileSelect}
+                                            disabled={uploadingFile}
+                                        >
+                                            {uploadingFile ? (
+                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
+                                            ) : (
+                                                <Paperclip size={20}/>
+                                            )}
                                         </Button>
-                                        <Button variant="ghost" size="icon"
-                                                className="text-gray-500 hover:text-[#53B175] hover:bg-[#53B175]/10 transition-colors duration-200">
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon"
+                                            className="text-gray-500 hover:text-[#53B175] hover:bg-[#53B175]/10 transition-colors duration-200"
+                                            onClick={handleFileSelect}
+                                        >
                                             <Image size={20}/>
                                         </Button>
                                         <Button
@@ -372,8 +825,13 @@ export default function MessagerieApp() {
                                             size="icon"
                                             className="bg-[#53B175] text-white hover:bg-[#53B175]/90 transition-colors duration-200 rounded-full"
                                             onClick={handleSendMessage}
+                                            disabled={sendingMessage || !newMessage.trim()}
                                         >
-                                            <Send size={20}/>
+                                            {sendingMessage ? (
+                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                            ) : (
+                                                <Send size={20}/>
+                                            )}
                                         </Button>
                                     </div>
                                 </div>
@@ -390,6 +848,15 @@ export default function MessagerieApp() {
                     </div>
                 </div>
             </div>
+            
+            <NewConversationModal
+                isOpen={showNewConversationModal}
+                onClose={() => setShowNewConversationModal(false)}
+                onCreateConversation={handleCreateConversation}
+                users={users}
+                searchingUsers={searchingUsers}
+                onSearchUsers={searchUsers}
+            />
         </Layout>
     );
 }
