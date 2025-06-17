@@ -19,7 +19,7 @@ const ProductLocationMarker = ({ productData }) => {
     const mapContainer = map.getContainer();
     const mapHeight = mapContainer.offsetHeight;
     
-    const offsetY = mapHeight * 0.25;
+    const offsetY = mapHeight * 0.4;
     
     const targetPoint = map.project(position, map.getZoom()).subtract([0, offsetY]);
     const targetLatLng = map.unproject(targetPoint, map.getZoom());

@@ -6,6 +6,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import Searchbar from "@/components/map/Searchbar.jsx";
 import Layout from "../Layout.jsx";
 import axiosConfig from "@/context/axiosConfig.js";
+import { geocodeAddress } from "./geocodingService.js";
 
 const LocationMarker = ({ position }) => {
   return position === null ? null : (
@@ -33,7 +34,6 @@ const MapController = ({ onLocateClick, setPosition }) => {
     };
 
     const handleLocationError = (e) => {
-      console.log("Erreur de localisation:", e);
       map.flyTo([49.20345799589907, 2.588511010251282], map.getZoom());
     };
 
@@ -64,6 +64,7 @@ const Map = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [geocodingProgress, setGeocodingProgress] = useState({ current: 0, total: 0 });
   const locateFunctionRef = useRef(null);
 
   const handleSetLocateFunction = useCallback((fn) => {
@@ -76,6 +77,64 @@ const Map = () => {
     }
   };
 
+  const geocodeProducts = async (productsData) => {
+    const geocodedProducts = [];
+    
+    setGeocodingProgress({ current: 0, total: productsData.length });
+    
+    for (let i = 0; i < productsData.length; i++) {
+      const productData = productsData[i];
+      const product = productData["0"];
+      const address = product?.pickingAddress;
+      
+      if (address && address.trim()) {
+        try {
+          const geocodeResult = await geocodeAddress(address);
+          
+          if (geocodeResult) {
+            const updatedProductData = {
+              ...productData,
+              latitude: geocodeResult.latitude,
+              longitude: geocodeResult.longitude,
+              geocoded: true,
+              originalAddress: address,
+              geocodedAddress: geocodeResult.displayName
+            };
+            geocodedProducts.push(updatedProductData);
+          } else {
+            geocodedProducts.push({
+              ...productData,
+              geocoded: false,
+              geocodeError: true,
+              errorAddress: address
+            });
+          }
+        } catch (error) {
+          geocodedProducts.push({
+            ...productData,
+            geocoded: false,
+            geocodeError: true,
+            errorAddress: address
+          });
+        }
+      } else {
+        geocodedProducts.push({
+          ...productData,
+          geocoded: false,
+          noAddress: true
+        });
+      }
+      
+      setGeocodingProgress({ current: i + 1, total: productsData.length });
+      
+      if (i < productsData.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1100));
+      }
+    }
+    
+    return geocodedProducts;
+  };
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -83,28 +142,34 @@ const Map = () => {
         setError(null);
         
         const response = await axiosConfig.get('/product/locations');
-        
-        console.log("Produits récupérés:", response.data);
-        setProducts(response.data);
+        const geocodedProducts = await geocodeProducts(response.data);
+        setProducts(geocodedProducts);
         
       } catch (error) {
-        console.error("Erreur lors de la récupération des produits:", error);
         setError("Impossible de charger les produits");
         setProducts([]);
       } finally {
         setLoading(false);
+        setGeocodingProgress({ current: 0, total: 0 });
       }
     };
 
     fetchProducts();
   }, []);
 
-  // Mise à jour de la position utilisateur
   useEffect(() => {
     if (latitude && longitude) {
       setCurrentPosition([latitude, longitude]);
     }
   }, [latitude, longitude]);
+
+  const validProducts = products.filter(productData => 
+    productData.geocoded && 
+    productData.latitude && 
+    productData.longitude && 
+    !isNaN(productData.latitude) && 
+    !isNaN(productData.longitude)
+  );
 
   return (
     <Layout>
@@ -123,7 +188,7 @@ const Map = () => {
             
             <LocationMarker position={currentPosition} />
             
-            {products.map((productData, index) => (
+            {validProducts.map((productData, index) => (
               <ProductLocationMarker 
                 key={productData["0"]?.id || index} 
                 productData={productData} 
@@ -158,11 +223,16 @@ const Map = () => {
             </button>
           </div>
 
-          {loading && (
+          {(loading || geocodingProgress.total > 0) && (
             <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-[1000] bg-white rounded-lg shadow-lg px-4 py-2">
               <div className="flex items-center space-x-2">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-500"></div>
-                <span className="text-sm">Chargement des produits...</span>
+                <span className="text-sm">
+                  {geocodingProgress.total > 0 
+                    ? `Géolocalisation ${geocodingProgress.current}/${geocodingProgress.total}...`
+                    : "Chargement des produits..."
+                  }
+                </span>
               </div>
             </div>
           )}
