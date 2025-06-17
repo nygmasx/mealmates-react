@@ -42,8 +42,9 @@ const useChat = () => {
     const [error, setError] = useState(null);
     const [sendingMessage, setSendingMessage] = useState(false);
     const [typingUsers, setTypingUsers] = useState({});
-    const [users, setUsers] = useState([]);
-    const [searchingUsers, setSearchingUsers] = useState(false);
+    const [allUsers, setAllUsers] = useState([]);
+    const [filteredUsers, setFilteredUsers] = useState([]);
+    const [loadingUsers, setLoadingUsers] = useState(false);
 
     const loadConversations = useCallback(async () => {
         try {
@@ -135,25 +136,31 @@ const useChat = () => {
         }
     }, []);
 
-    const searchUsers = useCallback(async (query) => {
+    const loadAllUsers = useCallback(async () => {
+        setLoadingUsers(true);
+        try {
+            const response = await axiosConfig.get('/user');
+            setAllUsers(response.data);
+        } catch (error) {
+            console.error('Error loading users:', error);
+            setError('Impossible de charger les utilisateurs');
+        } finally {
+            setLoadingUsers(false);
+        }
+    }, []);
+
+    const searchUsers = useCallback((query) => {
         if (!query.trim()) {
-            setUsers([]);
+            setFilteredUsers([]);
             return;
         }
 
-        setSearchingUsers(true);
-        try {
-            const response = await axiosConfig.get('/users/search', {
-                params: { q: query }
-            });
-            setUsers(response.data);
-        } catch (error) {
-            console.error('Error searching users:', error);
-            setError('Impossible de rechercher les utilisateurs');
-        } finally {
-            setSearchingUsers(false);
-        }
-    }, []);
+        const filtered = allUsers.filter(user =>
+            user.name?.toLowerCase().includes(query.toLowerCase()) ||
+            user.email?.toLowerCase().includes(query.toLowerCase())
+        );
+        setFilteredUsers(filtered);
+    }, [allUsers]);
 
     const createConversation = useCallback(async (userId, initialMessage = '') => {
         try {
@@ -162,10 +169,9 @@ const useChat = () => {
                 userId,
                 message: initialMessage
             });
-            
-            // Refresh conversations list
+
             await loadConversations();
-            
+
             return response.data;
         } catch (error) {
             console.error('Error creating conversation:', error);
@@ -191,8 +197,10 @@ const useChat = () => {
         setUnreadCounts,
         typingUsers,
         setTypingUsers,
-        users,
-        searchingUsers,
+        allUsers,
+        filteredUsers,
+        loadingUsers,
+        loadAllUsers,
         searchUsers,
         createConversation
     };
@@ -277,7 +285,7 @@ const Message = memo(({message, currentUser}) => {
     );
 });
 
-const NewConversationModal = memo(({ isOpen, onClose, onCreateConversation, users, searchingUsers, onSearchUsers }) => {
+const NewConversationModal = memo(({ isOpen, onClose, onCreateConversation, users, loadingUsers, onSearchUsers, onLoadUsers }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedUser, setSelectedUser] = useState(null);
     const [initialMessage, setInitialMessage] = useState('');
@@ -287,19 +295,26 @@ const NewConversationModal = memo(({ isOpen, onClose, onCreateConversation, user
     const handleSearchChange = useCallback((e) => {
         const query = e.target.value;
         setSearchQuery(query);
-        
+
         if (searchTimeoutRef.current) {
             clearTimeout(searchTimeoutRef.current);
         }
-        
+
         searchTimeoutRef.current = setTimeout(() => {
             onSearchUsers(query);
         }, 300);
     }, [onSearchUsers]);
 
+    // Load all users when modal opens
+    useEffect(() => {
+        if (isOpen && onLoadUsers) {
+            onLoadUsers();
+        }
+    }, [isOpen, onLoadUsers]);
+
     const handleCreateConversation = useCallback(async () => {
         if (!selectedUser) return;
-        
+
         setCreating(true);
         try {
             const conversation = await onCreateConversation(selectedUser.id, initialMessage);
@@ -325,7 +340,7 @@ const NewConversationModal = memo(({ isOpen, onClose, onCreateConversation, user
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold">Nouvelle conversation</h2>
@@ -333,7 +348,7 @@ const NewConversationModal = memo(({ isOpen, onClose, onCreateConversation, user
                         <X size={20} />
                     </Button>
                 </div>
-                
+
                 <div className="space-y-4">
                     <div>
                         <label className="text-sm font-medium text-gray-700 mb-2 block">
@@ -350,13 +365,13 @@ const NewConversationModal = memo(({ isOpen, onClose, onCreateConversation, user
                             <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
                         </div>
                     </div>
-                    
-                    {searchingUsers && (
+
+                    {loadingUsers && (
                         <div className="flex justify-center py-2">
                             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#53B175]"></div>
                         </div>
                     )}
-                    
+
                     {users.length > 0 && (
                         <div className="max-h-40 overflow-y-auto border rounded-md">
                             {users.map(user => (
@@ -378,7 +393,7 @@ const NewConversationModal = memo(({ isOpen, onClose, onCreateConversation, user
                             ))}
                         </div>
                     )}
-                    
+
                     {selectedUser && (
                         <div>
                             <label className="text-sm font-medium text-gray-700 mb-2 block">
@@ -393,7 +408,7 @@ const NewConversationModal = memo(({ isOpen, onClose, onCreateConversation, user
                             />
                         </div>
                     )}
-                    
+
                     <div className="flex space-x-3 pt-4">
                         <Button
                             variant="outline"
@@ -460,8 +475,8 @@ const TypingIndicator = memo(({ typingUsers }) => {
                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
             </div>
             <span className="text-sm ml-2">
-                {typingUsers.length === 1 
-                    ? `${typingUsers[0]} écrit...` 
+                {typingUsers.length === 1
+                    ? `${typingUsers[0]} écrit...`
                     : `${typingUsers.length} personnes écrivent...`}
             </span>
         </div>
@@ -498,8 +513,10 @@ export default function MessagerieApp() {
         setUnreadCounts,
         typingUsers,
         setTypingUsers,
-        users,
-        searchingUsers,
+        allUsers,
+        filteredUsers,
+        loadingUsers,
+        loadAllUsers,
         searchUsers,
         createConversation
     } = useChat();
@@ -570,7 +587,7 @@ export default function MessagerieApp() {
         if (searchDebounceRef.current) {
             clearTimeout(searchDebounceRef.current);
         }
-        
+
         searchDebounceRef.current = setTimeout(() => {
             setDebouncedSearchQuery(searchQuery);
         }, 300);
@@ -591,7 +608,7 @@ export default function MessagerieApp() {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('type', 'file');
-            
+
             // In a real app, you'd upload the file first and get a URL
             // For now, we'll simulate with the file name
             await sendMessage(selectedConversation.id, `Fichier: ${file.name}`, 'file', [{
@@ -635,12 +652,12 @@ export default function MessagerieApp() {
 
         messages.forEach((message) => {
             const messageDate = new Date(message.createdAt).toDateString();
-            
+
             if (messageDate !== currentDate) {
                 groups.push({ type: 'date', date: message.createdAt });
                 currentDate = messageDate;
             }
-            
+
             groups.push({ type: 'message', data: message });
         });
 
@@ -664,7 +681,7 @@ export default function MessagerieApp() {
         }
     }, [newMessage, selectedConversation, sendMessage, sendingMessage]);
 
-    const filteredConversations = useMemo(() => 
+    const filteredConversations = useMemo(() =>
         conversations.filter(conv =>
             conv.name?.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
         ), [conversations, debouncedSearchQuery]
@@ -752,7 +769,7 @@ export default function MessagerieApp() {
                                             <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
                                             <h3 className="text-lg font-medium text-gray-900 mb-2">Erreur</h3>
                                             <p className="text-gray-500 mb-4">{error}</p>
-                                            <Button 
+                                            <Button
                                                 onClick={() => selectedConversation && loadMessages(selectedConversation.id)}
                                                 variant="outline"
                                             >
@@ -761,7 +778,7 @@ export default function MessagerieApp() {
                                         </div>
                                     ) : (
                                         <>
-                                            {groupedMessages.map((item, index) => 
+                                            {groupedMessages.map((item, index) =>
                                                 item.type === 'date' ? (
                                                     <DateSeparator key={`date-${index}`} date={item.date} />
                                                 ) : (
@@ -799,8 +816,8 @@ export default function MessagerieApp() {
                                         accept="*/*"
                                     />
                                     <div className="flex gap-1">
-                                        <Button 
-                                            variant="ghost" 
+                                        <Button
+                                            variant="ghost"
                                             size="icon"
                                             className="text-gray-500 hover:text-[#53B175] hover:bg-[#53B175]/10 transition-colors duration-200"
                                             onClick={handleFileSelect}
@@ -812,8 +829,8 @@ export default function MessagerieApp() {
                                                 <Paperclip size={20}/>
                                             )}
                                         </Button>
-                                        <Button 
-                                            variant="ghost" 
+                                        <Button
+                                            variant="ghost"
                                             size="icon"
                                             className="text-gray-500 hover:text-[#53B175] hover:bg-[#53B175]/10 transition-colors duration-200"
                                             onClick={handleFileSelect}
@@ -848,14 +865,15 @@ export default function MessagerieApp() {
                     </div>
                 </div>
             </div>
-            
+
             <NewConversationModal
                 isOpen={showNewConversationModal}
                 onClose={() => setShowNewConversationModal(false)}
                 onCreateConversation={handleCreateConversation}
-                users={users}
-                searchingUsers={searchingUsers}
+                users={filteredUsers}
+                loadingUsers={loadingUsers}
                 onSearchUsers={searchUsers}
+                onLoadUsers={loadAllUsers}
             />
         </Layout>
     );
