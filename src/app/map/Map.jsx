@@ -62,6 +62,7 @@ const Map = () => {
   const { latitude, longitude } = useGeolocation();
   const [currentPosition, setCurrentPosition] = useState([49.20345799589907, 2.588511010251282]);
   const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [geocodingProgress, setGeocodingProgress] = useState({ current: 0, total: 0 });
@@ -77,6 +78,14 @@ const Map = () => {
     }
   };
 
+  const handleFiltersApplied = (filteredData) => {
+    setFilteredProducts(filteredData);
+  };
+
+  const handleClearFilters = () => {
+    setFilteredProducts([]);
+  };
+
   const geocodeProducts = async (productsData) => {
     const geocodedProducts = [];
     
@@ -84,8 +93,8 @@ const Map = () => {
     
     for (let i = 0; i < productsData.length; i++) {
       const productData = productsData[i];
-      const product = productData["0"];
-      const address = product?.pickingAddress;
+      
+      const address = productData?.pickingAddress;
       
       if (address && address.trim()) {
         try {
@@ -141,9 +150,10 @@ const Map = () => {
         setLoading(true);
         setError(null);
         
-        const response = await axiosConfig.get('/product/locations');
+        const response = await axiosConfig.get('/product/');
         const geocodedProducts = await geocodeProducts(response.data);
         setProducts(geocodedProducts);
+        setFilteredProducts([]);
         
       } catch (error) {
         setError("Impossible de charger les produits");
@@ -163,7 +173,9 @@ const Map = () => {
     }
   }, [latitude, longitude]);
 
-  const validProducts = products.filter(productData => 
+  const displayedProducts = filteredProducts.length > 0 ? filteredProducts : products;
+
+  const validProducts = displayedProducts.filter(productData => 
     productData.geocoded && 
     productData.latitude && 
     productData.longitude && 
@@ -190,7 +202,7 @@ const Map = () => {
             
             {validProducts.map((productData, index) => (
               <ProductLocationMarker 
-                key={productData["0"]?.id || index} 
+                key={productData?.id || index} 
                 productData={productData} 
               />
             ))}
@@ -202,7 +214,11 @@ const Map = () => {
           </MapContainer>
 
           <div className="fixed top-4 left-0 right-0 z-[1000]">
-            <Searchbar />
+            <Searchbar 
+              onFiltersApplied={handleFiltersApplied}
+              onClearFilters={handleClearFilters}
+              hasActiveFilters={filteredProducts.length > 0}
+            />
           </div>
 
           <div className="absolute bottom-28 right-4 z-[900]">

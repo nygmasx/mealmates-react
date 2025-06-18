@@ -32,8 +32,8 @@ export const geocodeAddress = async (address) => {
     
     if (data && data.length > 0) {
       const result = {
-        latitude: parseFloat(data[0].lat),
-        longitude: parseFloat(data[0].lon),
+        latitude: data[0].lat,
+        longitude: data[0].lon,
         displayName: data[0].display_name,
         originalAddress: address
       };

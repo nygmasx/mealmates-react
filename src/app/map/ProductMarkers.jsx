@@ -4,7 +4,7 @@ import { createProductLocationIcon } from "./CustomMarker.jsx";
 const ProductLocationMarker = ({ productData }) => {
   const map = useMap();
 
-  const product = productData["0"];
+  const product = productData;
   const latitude = productData.latitude;
   const longitude = productData.longitude;
 
