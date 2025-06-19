@@ -26,6 +26,9 @@ function App() {
               <a href="/register" className="hidden md:flex ms-auto bg-[#53B175] text-white px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium mt-4">
                 S'inscrire
               </a>
+              <a href="/login" className="hidden md:flex ms-auto bg-white text-black px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium mt-4">
+                Se connecter
+              </a>
               <div className="absolute right-10 top-6">
                 <div className="md:hidden flex justify-end py-2  ">
                   <button onClick={() => setIsOpen(!isOpen)} className="p-2 text-black focus:outline-none" aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}>
