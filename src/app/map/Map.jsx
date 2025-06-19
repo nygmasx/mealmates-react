@@ -182,7 +182,6 @@ const Map = () => {
   return (
     <Layout>
       <div className="flex flex-col h-full">
-        <div className="h-full">
           <MapContainer 
             className="h-full w-full z-[900]" 
             center={currentPosition} 
@@ -246,7 +245,6 @@ const Map = () => {
               <span className="text-sm">{error}</span>
             </div>
           )}
-        </div>
       </div>
     </Layout>
   );
