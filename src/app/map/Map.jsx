@@ -11,7 +11,7 @@ import { geocodeAddress } from "./geocodingService.js";
 const LocationMarker = ({ position }) => {
   return position === null ? null : (
     <Marker position={position} icon={createUserLocationIcon()}>
-      <Popup>Ma position</Popup>
+      <Popup>Ma position</Popup>  
     </Marker>
   );
 };
@@ -135,10 +135,6 @@ const Map = () => {
       }
       
       setGeocodingProgress({ current: i + 1, total: productsData.length });
-      
-      if (i < productsData.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 1100));
-      }
     }
     
     return geocodedProducts;
@@ -240,16 +236,8 @@ const Map = () => {
           </div>
 
           {(loading || geocodingProgress.total > 0) && (
-            <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-[1000] bg-white rounded-lg shadow-lg px-4 py-2">
-              <div className="flex items-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-500"></div>
-                <span className="text-sm">
-                  {geocodingProgress.total > 0 
-                    ? `Géolocalisation ${geocodingProgress.current}/${geocodingProgress.total}...`
-                    : "Chargement des produits..."
-                  }
-                </span>
-              </div>
+            <div className="absolute inset-0 flex items-center justify-center z-[1000]">
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-green-500 border-t-transparent"></div>
             </div>
           )}
 
