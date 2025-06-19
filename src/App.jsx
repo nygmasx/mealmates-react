@@ -18,10 +18,9 @@ function App() {
 
               <nav className="hidden md:flex">
                 <ul className="flex flex-col md:flex-row flex-wrap justify-center md:justify-start gap-2 sm:gap-3 md:gap-4 font-bold text-xs sm:text-base list-none m-0 p-0">
-                  <a className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">Services</a>
-                  <a className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">Comment ça marche ?</a>
-                  <a className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">Carrière</a>
-                  <a className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">Newsletter</a>
+                  <a href="#why-mealmates" className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">Pourquoi MealMates ?</a>
+                  <a href="#how-it-works" className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">Comment ça marche ?</a>
+                  <a href="#testimonials" className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">Carrière</a>
                 </ul>
               </nav>
               <a href="/register" className="hidden md:flex ms-auto bg-[#53B175] text-white px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium mt-4">
@@ -70,7 +69,7 @@ function App() {
       </header>
 
       <section>
-        <div className="bg-[#53B175] py-16 md:py-24 text-white">
+        <div className="bg-[#53B175] py-16 md:py-24 text-white" id="why-mealmates">
           <div className="mx-auto max-w-6xl px-6 md:px-8 lg:px-12">
             <div className="mb-12">
               <div className="text-center">
@@ -116,7 +115,7 @@ function App() {
           </div>
         </div>
 
-        <div className="py-12 md:py-16 lg:py-24 text-black">
+        <div className="py-12 md:py-16 lg:py-24 text-black" id="how-it-works">
           <div className="px-4 sm:px-6 md:px-10 lg:px-16 xl:px-40 max-w-7xl mx-auto">
             <div className="mb-8 md:mb-12">
               <div className="text-center">
@@ -153,7 +152,7 @@ function App() {
           </div>
         </div>
 
-        <div className="bg-[#53B175] text-white py-5">
+        <div className="bg-[#53B175] text-white py-5" id="testimonials">
           <div className="mx-auto max-w-6xl px-4">
             <div className="flex flex-col lg:flex-row">
               <div className="w-full lg:w-5/12 mb-5 lg:mb-0">
@@ -207,43 +206,32 @@ function App() {
       </section>
 
       <footer>
-        <div className="py-8 md:py-12">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6">
-            <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-8">
-              <div className="w-full lg:w-1/2 mb-6 lg:mb-0">
-                <div className="flex flex-col md:flex-row items-center md:items-start gap-4">
-                  <div className="text-center md:text-left mb-3 md:mb-0">
-                    <img className="max-h-12 md:max-h-16" src="../../public/assets/logo-mealmates.png" alt="logo" />
-                  </div>
-                  <div className="text-center md:text-left">
-                    <h4 className="mb-2 md:mb-3 text-xl md:text-2xl lg:text-3xl font-bold">Abonnez-vous à notre newsletter</h4>
-                    <span className="text-[#53B175] block text-sm md:text-base">Abonnez-vous pour recevoir chaque semaine des nouvelles de notre entreprise et restez informé</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="w-full lg:w-1/2">
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="w-full sm:w-8/12 md:w-7/12">
-                    <input className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-[#53B175] focus:border-transparent" type="text" placeholder="Entrez votre email" />
-                  </div>
-                  <div className="w-full sm:w-4/12 md:w-5/12">
-                    <button className="w-full p-3 bg-[#53B175] text-white rounded hover:bg-opacity-90 transition-all font-medium">S'abonner</button>
-                  </div>
-                </div>
-              </div>
+        <div className="w-full bg-gray-900 text-gray-100 border-t border-gray-800 px-6 md:px-12 py-10">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:justify-between gap-10">
+            <div className="mb-8 md:mb-0 md:w-1/4 flex justify-center md:justify-start">
+              <img className="max-h-16" src="../../public/assets/logo-mealmates.png" alt="logo" />
+            </div>
+            <div className="mb-8 md:mb-0 md:w-1/4 flex flex-col items-center md:items-start">
+              <span className="font-bold text-lg mb-3">Liens rapides</span>
+              <ul className="flex flex-col gap-2 font-medium text-sm list-none m-0 p-0">
+                <li>
+                  <a href="#why-mealmates" className="hover:text-[#53B175] transition-colors cursor-pointer">Pourquoi MealMates ?</a>
+                </li>
+                <li>
+                  <a href="#how-it-works" className="hover:text-[#53B175] transition-colors cursor-pointer">Comment ça marche ?</a>
+                </li>
+                <li>
+                  <a href="#testimonials" className="hover:text-[#53B175] transition-colors cursor-pointer">Carrière</a>
+                </li>
+              </ul>
+            </div>
+            <div className="md:w-1/4 flex flex-col items-center md:items-end text-sm text-gray-300">
+              <span className="font-bold text-lg mb-3">Contact</span>
+              <span className="mb-1">Email : <a href="mailto:contact@mealmates.fr" className="hover:text-[#53B175] transition-colors">contact@mealmates.fr</a></span>
+              <span className="mb-1">Tél : <a href="tel:0123456789" className="hover:text-[#53B175] transition-colors">01 23 45 67 89</a></span>
+              <span>Adresse : 123 rue de la Cuisine, Paris</span>
             </div>
           </div>
-        </div>
-        <div className="w-full px-4">
-          <nav className="flex justify-center mx-auto mt-5">
-            <ul className="flex flex-col md:flex-row gap-6 xs:flex-row text-xs sm:text-sm md:text-base lg:text-lg flex-wrap justify-center list-none m-0 p-0 gap-y-3">
-              <a className="xs:me-4 text-center xs:text-left hover:text-[#53B175] transition-colors cursor-pointer">A propos</a>
-              <a className="xs:mx-4 text-center xs:text-left hover:text-[#53B175] transition-colors cursor-pointer">Mentions légales</a>
-              <a className="xs:mx-4 text-center xs:text-left hover:text-[#53B175] transition-colors cursor-pointer">Politique de confidentialité</a>
-              <a className="xs:ms-4 text-center xs:text-left hover:text-[#53B175] transition-colors cursor-pointer">Contact</a>
-            </ul>
-          </nav>
         </div>
         <p className="text-center py-6 mb-0 text-xs sm:text-sm md:text-base lg:text-lg">©️ 2025 MealMates. Tous droits réservés</p>
       </footer>
