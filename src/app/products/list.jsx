@@ -4,6 +4,7 @@ import { FaRegClock, FaMapMarkerAlt, FaUser, FaPhone, FaShoppingCart } from "rea
 import { IoMdHeart, IoMdClose } from "react-icons/io";
 import { FiSearch, FiArrowLeft } from "react-icons/fi";
 import { Input } from "@/components/ui/input";
+import { useNavigate } from 'react-router';
 import Layout from '../Layout';
 
 const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
@@ -207,7 +208,7 @@ const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
                             ) : (
                                 <>
                                     <FaShoppingCart className="mr-2" />
-                                    {isFree ? 'Réserver' : 'Acheter'}
+                                    Réserver
                                 </>
                             )}
                         </button>
@@ -318,6 +319,7 @@ const ProductGridCard = ({ product, onClick }) => {
 };
 
 function OffersList() {
+    const navigate = useNavigate();
     const [products, setProducts] = useState([]);
     const [filteredProducts, setFilteredProducts] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -410,18 +412,35 @@ function OffersList() {
 
     const handlePurchase = async (product, quantity) => {
         try {
-            const purchaseData = {
-                productId: product.id,
-                quantity: quantity,
-                totalPrice: (parseFloat(product.price) * quantity).toFixed(2)
+            if (!product.id) {
+                throw new Error('Product ID is missing');
+            }
+
+            const bookingData = {
+                product_id: product.id
             };
 
-            console.log('Achat:', purchaseData);
-            alert(`${product.isDonation ? 'Réservation' : 'Achat'} confirmé pour ${product.title}`);
+            const response = await axiosConfig.post('/bookings', bookingData);
 
+            if (response.status === 201) {
+                const booking = response.data;
+
+                alert(`Réservation créée avec succès pour "${product.title || product.name}"!\n` +
+                    `ID de réservation: ${booking.id}\n` +
+                    `Prix total: ${booking.total_price}€\n` +
+                    `Status: En attente de confirmation du vendeur`);
+
+                navigate('/messages');
+            }
         } catch (error) {
-            console.error('Erreur lors de l\'achat:', error);
-            alert('Erreur lors de l\'achat. Veuillez réessayer.');
+
+            if (error.response) {
+                const errorMessage = error.response.data?.message || 'Erreur lors de la réservation';
+                alert(`Erreur (${error.response.status}): ${errorMessage}`);
+            } else {
+                alert(`Une erreur inattendue s'est produite: ${error.message}`);
+            }
+
             throw error;
         }
     };
