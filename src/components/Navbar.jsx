@@ -34,7 +34,7 @@ const Navbar = () => {
 
                 <Link
                     to="/offers/create"
-                    className={`flex flex-col items-center justify-center ${isActive('//offers/create') ? 'text-green-600' : 'text-gray-600'}`}
+                    className={`flex flex-col items-center justify-center ${isActive('/offers/create') ? 'text-green-600' : 'text-gray-600'}`}
                 >
                     <CgAddR className="text-3xl mb-1"/>
                     <span className="text-xs">Publier</span>

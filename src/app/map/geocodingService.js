@@ -1,5 +1,5 @@
-const GEOCODING_API_KEY = import.meta.env.VITE_GEOCODING_API_KEY;
-const GEOCODING_BASE_URL = 'https://geocode.maps.co/search';
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+const GOOGLE_GEOCODING_BASE_URL = 'https://maps.googleapis.com/maps/api/geocode/json';
 
 const geocodeCache = new Map();
 
@@ -8,8 +8,8 @@ export const geocodeAddress = async (address) => {
     return null;
   }
 
-  if (!GEOCODING_API_KEY) {
-    console.error('Clé API de géocodage manquante. Vérifiez votre fichier .env');
+  if (!GOOGLE_MAPS_API_KEY) {
+    console.error('Clé API Google Maps manquante. Vérifiez votre fichier .env (VITE_GOOGLE_MAPS_API_KEY)');
     return null;
   }
 
@@ -20,7 +20,7 @@ export const geocodeAddress = async (address) => {
 
   try {
     const encodedAddress = encodeURIComponent(address);
-    const url = `${GEOCODING_BASE_URL}?q=${encodedAddress}&api_key=${GEOCODING_API_KEY}`;
+    const url = `${GOOGLE_GEOCODING_BASE_URL}?address=${encodedAddress}&key=${GOOGLE_MAPS_API_KEY}`;
     
     const response = await fetch(url);
     
@@ -30,12 +30,22 @@ export const geocodeAddress = async (address) => {
     
     const data = await response.json();
     
-    if (data && data.length > 0) {
+    if (data.status !== 'OK') {
+      console.warn(`Erreur de géocodage Google: ${data.status}`, data.error_message || '');
+      geocodeCache.set(cacheKey, null);
+      return null;
+    }
+    
+    if (data.results && data.results.length > 0) {
+      const firstResult = data.results[0];
       const result = {
-        latitude: data[0].lat,
-        longitude: data[0].lon,
-        displayName: data[0].display_name,
-        originalAddress: address
+        latitude: firstResult.geometry.location.lat,
+        longitude: firstResult.geometry.location.lng,
+        displayName: firstResult.formatted_address,
+        originalAddress: address,
+        placeId: firstResult.place_id,
+        types: firstResult.types,
+        addressComponents: firstResult.address_components
       };
       
       geocodeCache.set(cacheKey, result);
@@ -46,13 +56,13 @@ export const geocodeAddress = async (address) => {
     }
     
   } catch (error) {
-    console.error('Erreur de géocodage:', error);
+    console.error('Erreur de géocodage Google:', error);
     geocodeCache.set(cacheKey, null);
     return null;
   }
 };
 
-export const geocodeMultipleAddresses = async (addresses, delay = 1100) => {
+export const geocodeMultipleAddresses = async (addresses) => {
   const results = [];
   
   for (let i = 0; i < addresses.length; i++) {
@@ -60,10 +70,26 @@ export const geocodeMultipleAddresses = async (addresses, delay = 1100) => {
     const result = await geocodeAddress(address);
     results.push({ address, result });
     
-    if (i < addresses.length - 1) {
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
   }
   
   return results;
+};
+
+export const extractAddressComponent = (addressComponents, type) => {
+  const component = addressComponents?.find(comp => comp.types.includes(type));
+  return component ? component.long_name : null;
+};
+
+export const parseAddressComponents = (addressComponents) => {
+  if (!addressComponents) return {};
+  
+  return {
+    streetNumber: extractAddressComponent(addressComponents, 'street_number'),
+    route: extractAddressComponent(addressComponents, 'route'),
+    locality: extractAddressComponent(addressComponents, 'locality'),
+    administrativeAreaLevel1: extractAddressComponent(addressComponents, 'administrative_area_level_1'),
+    administrativeAreaLevel2: extractAddressComponent(addressComponents, 'administrative_area_level_2'),
+    country: extractAddressComponent(addressComponents, 'country'),
+    postalCode: extractAddressComponent(addressComponents, 'postal_code')
+  };
 };
