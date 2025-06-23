@@ -1,12 +1,20 @@
 import { Marker, Popup, useMap } from "react-leaflet";
 import { createProductLocationIcon } from "./CustomMarker.jsx";
+import {Button} from "@/components/ui/button.jsx";
+import {FaShoppingCart} from "react-icons/fa";
+import React, {useState} from "react";
+import axiosConfig from "@/context/axiosConfig.js";
+import { useNavigate } from 'react-router';
 
 const ProductLocationMarker = ({ productData }) => {
   const map = useMap();
+  const navigate = useNavigate();
 
   const product = productData;
   const latitude = productData.latitude;
   const longitude = productData.longitude;
+
+  const [isLoading, setPurchaseLoading] = useState(false);
 
   if (!latitude || !longitude || !product) {
     console.warn("Produit sans coordonnées ou données manquantes:", productData);
@@ -18,12 +26,12 @@ const ProductLocationMarker = ({ productData }) => {
   const handleMarkerClick = () => {
     const mapContainer = map.getContainer();
     const mapHeight = mapContainer.offsetHeight;
-    
+
     const offsetY = mapHeight * 0.4;
-    
+
     const targetPoint = map.project(position, map.getZoom()).subtract([0, offsetY]);
     const targetLatLng = map.unproject(targetPoint, map.getZoom());
-    
+
     map.flyTo(targetLatLng, 15, {
       duration: 1
     });
@@ -41,7 +49,7 @@ const ProductLocationMarker = ({ productData }) => {
   const getProductType = (type) => {
     const types = {
       'vegetables': 'Légumes',
-      'fruits': 'Fruits', 
+      'fruits': 'Fruits',
       'prepared_meal': 'Plat préparé',
       'dairy_product': 'Produit laitier',
       'cake': 'Gâteau',
@@ -53,17 +61,55 @@ const ProductLocationMarker = ({ productData }) => {
 
   const getAvailabilities = (availabilities) => {
     if (!availabilities || !Array.isArray(availabilities)) return 'Non spécifiées';
-    
+
     const enabledDays = availabilities
       .filter(av => av.isEnabled)
       .map(av => `${av.day} ${av.startTime}-${av.endTime}`);
-    
+
     return enabledDays.length > 0 ? enabledDays : ['Aucune disponibilité'];
   };
 
+  const handlePurchase = async () => {
+    setPurchaseLoading(true);
+    try {
+      if (!product.id) {
+        throw new Error('Product ID is missing');
+      }
+
+      const bookingData = {
+        product_id: product.id
+      };
+
+      console.log(bookingData)
+
+      const response = await axiosConfig.post('/bookings', bookingData);
+
+      if (response.status === 201) {
+        const booking = response.data;
+
+        alert(`Réservation créée avec succès pour "${product.title || product.name}"!\n` +
+          `ID de réservation: ${booking.id}\n` +
+          `Prix total: ${booking.total_price}€\n` +
+          `Status: En attente de confirmation du vendeur`);
+
+        navigate('/messages');
+      }
+    } catch (error) {
+      if (error.response) {
+        const errorMessage = error.response.data?.message || 'Erreur lors de la réservation';
+        alert(`Erreur (${error.response.status}): ${errorMessage}`);
+      } else {
+        alert(`Une erreur inattendue s'est produite: ${error.message}`);
+      }
+      console.error('Erreur lors de l\'achat:', error);
+    } finally {
+      setPurchaseLoading(false);
+    }
+  };
+
   return (
-    <Marker 
-      position={position} 
+    <Marker
+      position={position}
       icon={createProductLocationIcon()}
       eventHandlers={{
         click: handleMarkerClick
@@ -74,7 +120,7 @@ const ProductLocationMarker = ({ productData }) => {
           <h3 className="font-bold text-lg mb-2 text-gray-800">
             {product.title || 'Titre manquant'}
           </h3>
-          
+
           <div className="flex justify-between items-center mb-2">
             <div className="text-sm text-gray-600">
               <span className="font-medium">Type:</span> {getProductType(product.type)}
@@ -85,7 +131,7 @@ const ProductLocationMarker = ({ productData }) => {
               </div>
             )}
           </div>
-          
+
           <div className="flex justify-between items-center mb-2">
             <span className="font-bold text-green-600 text-lg">
               {product.price > 0 ? `${product.price}€` : 'Gratuit'}
@@ -96,7 +142,7 @@ const ProductLocationMarker = ({ productData }) => {
               </span>
             )}
           </div>
-          
+
           <div className="text-xs text-gray-500 mb-3">
             <span className="font-medium">Expire le:</span> {formatDate(product.expiresAt)}
           </div>
@@ -126,7 +172,7 @@ const ProductLocationMarker = ({ productData }) => {
               </div>
             </div>
           )}
-          
+
           {product.dietaryPreferences && product.dietaryPreferences.length > 0 && (
             <div className="mb-3">
               <div className="text-xs font-medium text-gray-700 mb-1">
@@ -134,8 +180,8 @@ const ProductLocationMarker = ({ productData }) => {
               </div>
               <div className="flex flex-wrap gap-1">
                 {product.dietaryPreferences.slice(0, 3).map((pref) => (
-                  <span 
-                    key={pref.id} 
+                  <span
+                    key={pref.id}
                     className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs"
                   >
                     {pref.name}
@@ -156,6 +202,20 @@ const ProductLocationMarker = ({ productData }) => {
             </div>
           )}
         </div>
+        <button
+            onClick={handlePurchase}
+            disabled={isLoading}
+            className="flex-1 py-3 w-full bg-button-green text-white font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center disabled:opacity-50"
+        >
+          {isLoading ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+          ) : (
+              <>
+                <FaShoppingCart className="mr-2" />
+                Réserver
+              </>
+          )}
+        </button>
       </Popup>
     </Marker>
   );
