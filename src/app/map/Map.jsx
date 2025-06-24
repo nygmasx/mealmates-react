@@ -44,7 +44,6 @@ const MapController = ({ onLocateClick, setPosition }) => {
       try {
         map.locate();
       } catch (error) {
-        console.error("Erreur lors de l'appel à map.locate():", error);
       }
     }, 500);
 
@@ -64,6 +63,7 @@ const Map = () => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filterLoading, setFilterLoading] = useState(false);
   const [error, setError] = useState(null);
   const [geocodingProgress, setGeocodingProgress] = useState({ current: 0, total: 0 });
   const locateFunctionRef = useRef(null);
@@ -78,28 +78,38 @@ const Map = () => {
     }
   };
 
-  const handleFiltersApplied = (filteredData) => {
-    setFilteredProducts(filteredData);
-  };
+  const handleFiltersApplied = useCallback(async (filteredData) => {
+    if (filteredData && filteredData.length > 0) {
+      setFilterLoading(true);
+      try {
+        const geocodedFilteredProducts = await geocodeProducts(filteredData);
+        setFilteredProducts(geocodedFilteredProducts);
+      } catch (error) {
+      } finally {
+        setFilterLoading(false);
+        setGeocodingProgress({ current: 0, total: 0 });
+      }
+    } else {
+      setFilteredProducts([]);
+      setFilterLoading(false);
+    }
+  }, []);
 
-  const handleClearFilters = () => {
+  const handleClearFilters = useCallback(() => {
     setFilteredProducts([]);
-  };
+    setFilterLoading(false);
+    setGeocodingProgress({ current: 0, total: 0 });
+  }, []);
 
   const geocodeProducts = async (productsData) => {
     const geocodedProducts = [];
-    
     setGeocodingProgress({ current: 0, total: productsData.length });
-    
     for (let i = 0; i < productsData.length; i++) {
       const productData = productsData[i];
-      
       const address = productData?.pickingAddress;
-      
       if (address && address.trim()) {
         try {
           const geocodeResult = await geocodeAddress(address);
-          
           if (geocodeResult) {
             const updatedProductData = {
               ...productData,
@@ -133,10 +143,8 @@ const Map = () => {
           noAddress: true
         });
       }
-      
       setGeocodingProgress({ current: i + 1, total: productsData.length });
     }
-    
     return geocodedProducts;
   };
 
@@ -145,12 +153,10 @@ const Map = () => {
       try {
         setLoading(true);
         setError(null);
-        
         const response = await axiosConfig.get('/product/');
         const geocodedProducts = await geocodeProducts(response.data);
         setProducts(geocodedProducts);
         setFilteredProducts([]);
-        
       } catch (error) {
         setError("Impossible de charger les produits");
         setProducts([]);
@@ -159,7 +165,6 @@ const Map = () => {
         setGeocodingProgress({ current: 0, total: 0 });
       }
     };
-
     fetchProducts();
   }, []);
 
@@ -170,17 +175,17 @@ const Map = () => {
   }, [latitude, longitude]);
 
   const displayedProducts = filteredProducts.length > 0 ? filteredProducts : products;
-
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const validProducts = displayedProducts.filter(productData => 
-    productData.geocoded && 
-    productData.latitude && 
-    productData.longitude && 
-    new Date(productData.expiresAt) >= today &&
-    !isNaN(productData.latitude) && 
-    !isNaN(productData.longitude)
-  );
+  const validProducts = displayedProducts.filter(productData => {
+    const hasValidCoordinates = productData.geocoded && 
+                               productData.latitude && 
+                               productData.longitude && 
+                               !isNaN(productData.latitude) && 
+                               !isNaN(productData.longitude);
+    const isNotExpired = new Date(productData.expiresAt) >= today;
+    return hasValidCoordinates && isNotExpired;
+  });
 
   return (
     <Layout>
@@ -195,22 +200,18 @@ const Map = () => {
               attribution='&copy; <a href="https://github.com/nygmasx/mealmates-react">Mealmates</a>' 
               url="https://tiles.stadiamaps.com/tiles/osm_bright/{z}/{x}/{y}{r}.png" 
             />
-            
             <LocationMarker position={currentPosition} />
-            
             {validProducts.map((productData, index) => (
               <ProductLocationMarker 
                 key={productData?.id || index} 
                 productData={productData} 
               />
             ))}
-            
             <MapController 
               onLocateClick={handleSetLocateFunction} 
               setPosition={setCurrentPosition}
             />
           </MapContainer>
-
           <div className="fixed top-4 left-0 right-0 z-[1000]">
             <Searchbar 
               onFiltersApplied={handleFiltersApplied}
@@ -218,7 +219,6 @@ const Map = () => {
               hasActiveFilters={filteredProducts.length > 0}
             />
           </div>
-
           <div className="absolute bottom-28 right-4 z-[900]">
             <button
               className="w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-gray-100 transition-colors border border-gray-200"
@@ -236,16 +236,29 @@ const Map = () => {
               </svg>
             </button>
           </div>
-
-          {(loading || geocodingProgress.total > 0) && (
+          {(loading || (filterLoading && geocodingProgress.total > 0)) && (
             <div className="absolute inset-0 flex items-center justify-center z-[1000]">
-              <div className="animate-spin rounded-full h-8 w-8 border-2 border-green-500 border-t-transparent"></div>
+              <div className="bg-white p-4 rounded-lg shadow-lg flex items-center space-x-3">
+                <div className="animate-spin rounded-full h-6 w-6 border-2 border-green-500 border-t-transparent"></div>
+                <span className="text-sm text-gray-700">
+                  {filterLoading 
+                    ? `Géolocalisation des filtres... ${geocodingProgress.current}/${geocodingProgress.total}`
+                    : 'Chargement des produits...'
+                  }
+                </span>
+              </div>
             </div>
           )}
-
           {error && (
             <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-[1000] bg-red-100 border border-red-400 text-red-700 rounded-lg px-4 py-2">
               <span className="text-sm">{error}</span>
+            </div>
+          )}
+          {filteredProducts.length > 0 && (
+            <div className="absolute top-20 left-4 z-[999] bg-green-100 border border-green-400 text-green-700 rounded-lg px-3 py-2">
+              <span className="text-sm">
+                {validProducts.length} produit{validProducts.length !== 1 ? 's' : ''} filtré{validProducts.length !== 1 ? 's' : ''}
+              </span>
             </div>
           )}
       </div>

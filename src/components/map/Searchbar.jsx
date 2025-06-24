@@ -25,20 +25,19 @@ const SearchIcon = (props) => {
     )
 }
 
-const FilterPanel = ({isOpen, onClose}) => {
+const FilterPanel = ({isOpen, onClose, onFiltersApplied}) => {
     const [selectedType, setSelectedType] = useState('');
     const [priceRange, setPriceRange] = useState([0, 100]);
     const [expirationDate, setExpirationDate] = useState('');
     const [dietaryPreferences, setDietaryPreferences] = useState([]);
     const [selectedPreferences, setSelectedPreferences] = useState([]);
-    const [filteredProducts, setFilteredProducts] = useState([]);
 
     const Types = {
-        fruits: 'Fruits',
-        vegetables: 'Légumes',
-        prepared_meal: 'Plats préparés',
-        dairy_product: 'Produits laitiers',
-        cake: 'Gâteaux',
+        food: 'Alimentation',
+        beverage: 'Boisson',
+        bakery: 'Boulangerie',
+        dairy: 'Produits laitiers',
+        other: 'Autre',
     };
 
     const token = localStorage.getItem("token");
@@ -50,13 +49,13 @@ const FilterPanel = ({isOpen, onClose}) => {
     }, [token]);
 
     const today = new Date().toISOString().split('T')[0];
+    
     const fetchDietaryPreferences = async () => {
         try {
             axiosConfig.defaults.headers.common["Authorization"] = `Bearer ${token}`;
             const response = await axiosConfig.get('/dietary-preferences/');
             setDietaryPreferences(response.data);
         } catch (error) {
-            console.error("Erreur lors de la récupération des préférences alimentaires:", error);
         }
     };
 
@@ -74,43 +73,62 @@ const FilterPanel = ({isOpen, onClose}) => {
 
     const handleDietaryPreferenceChange = (prefId) => {
         setSelectedPreferences(prevSelected => {
-            if (prevSelected.includes(prefId)) {
-                return prevSelected.filter(id => id !== prefId);
-            } else {
-                return [...prevSelected, prefId];
-            }
+            const newSelected = prevSelected.includes(prefId) 
+                ? prevSelected.filter(id => id !== prefId)
+                : [...prevSelected, prefId];
+            return newSelected;
         });
     };
 
     const handleApplyFilters = async () => {
         try {
+            const token = localStorage.getItem("token");
+            
+            if (!token) {
+                return;
+            }
+
             axiosConfig.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+            let formattedExpirationDate = undefined;
+            if (expirationDate) {
+                const date = new Date(expirationDate);
+                date.setDate(date.getDate() + 1);
+                date.setHours(0, 0, 0, 0);
+                formattedExpirationDate = date.toISOString();
+            }
 
             const filterData = {
                 filters: {
                     type: selectedType || undefined,
                     maxPrice: priceRange[1],
-                    expiresAt: expirationDate || undefined,
-                    dietaryPreferences: selectedPreferences
+                    expiresAt: formattedExpirationDate,
+                    dietaryPreferences: selectedPreferences.length > 0 ? selectedPreferences : undefined
                 }
             };
 
             Object.keys(filterData.filters).forEach(key => {
-                if (filterData.filters[key] === undefined) {
+                if (filterData.filters[key] === undefined || 
+                    (Array.isArray(filterData.filters[key]) && filterData.filters[key].length === 0)) {
                     delete filterData.filters[key];
                 }
             });
 
-            console.log("Données de filtres envoyées:", filterData);
-
             const response = await axiosConfig.post('/product/filter', filterData);
-
-            setFilteredProducts(response.data);
-            console.log("Produits filtrés:", response.data);
+            
+            onFiltersApplied(response.data || []);
             onClose();
         } catch (error) {
-            console.error("Erreur lors de l'application des filtres:", error);
         }
+    };
+
+    const handleClearFilters = () => {
+        setSelectedType('');
+        setPriceRange([0, 100]);
+        setExpirationDate('');
+        setSelectedPreferences([]);
+        onFiltersApplied([]);
+        onClose();
     };
 
     return (
@@ -163,6 +181,9 @@ const FilterPanel = ({isOpen, onClose}) => {
 
                         <div className="mb-6">
                             <h3 className="text-lg font-medium mb-3">Date d'expiration maximale</h3>
+                            <p className="text-sm text-gray-600 mb-2">
+                                Afficher les produits qui expirent jusqu'à cette date incluse
+                            </p>
                             <div className="relative">
                                 <input
                                     type="date"
@@ -219,12 +240,20 @@ const FilterPanel = ({isOpen, onClose}) => {
                         </div>
 
                         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
-                            <button
-                                onClick={handleApplyFilters}
-                                className="w-full py-3 bg-button-green text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
-                            >
-                                Appliquer les filtres
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={handleClearFilters}
+                                    className="flex-1 py-3 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition-colors"
+                                >
+                                    Effacer
+                                </button>
+                                <button
+                                    onClick={handleApplyFilters}
+                                    className="flex-1 py-3 bg-button-green text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
+                                >
+                                    Appliquer
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </motion.div>
@@ -233,7 +262,7 @@ const FilterPanel = ({isOpen, onClose}) => {
     );
 };
 
-const Searchbar = ({onFiltersApplied}) => {
+const Searchbar = ({onFiltersApplied, onClearFilters, hasActiveFilters}) => {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 
     const toggleFilter = () => {
@@ -255,17 +284,27 @@ const Searchbar = ({onFiltersApplied}) => {
                             <button
                                 type="button"
                                 onClick={toggleFilter}
-                                className="p-3 bg-button-green text-white rounded-r-xl flex items-center justify-center"
+                                className={`p-3 text-white rounded-r-xl flex items-center justify-center transition-colors ${
+                                    hasActiveFilters ? 'bg-green-600' : 'bg-button-green'
+                                }`}
                             >
                                 <FiFilter size={20} />
+                                {hasActiveFilters && (
+                                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                                        !
+                                    </span>
+                                )}
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
 
-            <FilterPanel isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)}
-                         onFiltersApplied={onFiltersApplied}/>
+            <FilterPanel 
+                isOpen={isFilterOpen} 
+                onClose={() => setIsFilterOpen(false)}
+                onFiltersApplied={onFiltersApplied}
+            />
         </>
     );
 };
