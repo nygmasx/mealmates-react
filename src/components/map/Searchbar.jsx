@@ -242,24 +242,25 @@ const Searchbar = ({onFiltersApplied}) => {
 
     return (
         <>
-            <div className="w-full max-w-md mx-auto px-4 flex gap-4 items-center">
-                <div
-                    className="w-5/6 flex items-center space-x-2 rounded-full border border-gray-300 bg-white shadow-lg px-4 py-2 focus-within:ring-2 focus-within:ring-green-500 focus-within:border-green-500 transition-all">
-                    <SearchIcon className="h-5 w-5 text-gray-500"/>
-                    <Input
-                        type="search"
-                        placeholder="Rechercher un lieu..."
-                        className="w-full border-0 bg-transparent h-8 font-medium focus:outline-none focus:ring-0 placeholder:text-gray-400"
-                    />
-                </div>
-                <div>
-                    <button
-                        type="button"
-                        className="bg-button-green rounded-full p-4 transition-colors"
-                        onClick={toggleFilter}
-                    >
-                        <FiFilter className="h-5 w-5 text-white"/>
-                    </button>
+            <div className="w-full max-w-md mx-auto px-4">
+                <div className="relative w-full mb-4">
+                    <form className="relative">
+                        <div className="flex items-center bg-gray-100 rounded-xl">
+                            <SearchIcon className="ml-4 text-gray-500" width={20} height={20}/>
+                            <Input
+                                type="search"
+                                placeholder="Rechercher un lieu..."
+                                className="border-0 bg-transparent px-2 py-3 focus:ring-0 focus:outline-none w-full"
+                            />
+                            <button
+                                type="button"
+                                onClick={toggleFilter}
+                                className="p-3 bg-button-green text-white rounded-r-xl flex items-center justify-center"
+                            >
+                                <FiFilter size={20} />
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
 

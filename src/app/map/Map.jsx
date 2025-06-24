@@ -171,10 +171,13 @@ const Map = () => {
 
   const displayedProducts = filteredProducts.length > 0 ? filteredProducts : products;
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const validProducts = displayedProducts.filter(productData => 
     productData.geocoded && 
     productData.latitude && 
     productData.longitude && 
+    new Date(productData.expiresAt) >= today &&
     !isNaN(productData.latitude) && 
     !isNaN(productData.longitude)
   );
