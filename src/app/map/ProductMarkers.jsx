@@ -24,17 +24,16 @@ const ProductLocationMarker = ({ productData }) => {
   const position = [parseFloat(latitude), parseFloat(longitude)];
 
   const handleMarkerClick = () => {
-    const mapContainer = map.getContainer();
-    const mapHeight = mapContainer.offsetHeight;
+    const mapHeight = map.getContainer().offsetHeight;
+    const zoom = Math.max(map.getZoom(), 15);
+    const offsetY = mapHeight * 0.15;
+    
+    const offsetPosition = map.unproject(
+      map.project(position, zoom).add([0, -offsetY]), 
+      zoom
+    );
 
-    const offsetY = mapHeight * 0.4;
-
-    const targetPoint = map.project(position, map.getZoom()).subtract([0, offsetY]);
-    const targetLatLng = map.unproject(targetPoint, map.getZoom());
-
-    map.flyTo(targetLatLng, 15, {
-      duration: 1
-    });
+    map.flyTo(offsetPosition, zoom, { duration: 1.2, easeLinearity: 0.15 });
   };
 
   const formatDate = (dateString) => {
@@ -115,7 +114,7 @@ const ProductLocationMarker = ({ productData }) => {
         click: handleMarkerClick
       }}
     >
-      <Popup maxWidth={300} minWidth={250}>
+      <Popup maxWidth={300} minWidth={250} autoPan={false}>
         <div className="min-w-[250px] p-3">
           <h3 className="font-bold text-lg mb-2 text-gray-800">
             {product.title || 'Titre manquant'}
