@@ -56,6 +56,7 @@ const FilterPanel = ({isOpen, onClose, onFiltersApplied}) => {
             const response = await axiosConfig.get('/dietary-preferences/');
             setDietaryPreferences(response.data);
         } catch (error) {
+            console.error('Erreur lors du chargement des préférences alimentaires:', error);
         }
     };
 
@@ -119,6 +120,7 @@ const FilterPanel = ({isOpen, onClose, onFiltersApplied}) => {
             onFiltersApplied(response.data || []);
             onClose();
         } catch (error) {
+            console.error('Erreur lors du filtrage:', error);
         }
     };
 
@@ -262,8 +264,156 @@ const FilterPanel = ({isOpen, onClose, onFiltersApplied}) => {
     );
 };
 
-const Searchbar = ({onFiltersApplied, onClearFilters, hasActiveFilters}) => {
+const Searchbar = ({onFiltersApplied, onClearFilters, hasActiveFilters, onLocationSelected}) => {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [searchValue, setSearchValue] = useState('');
+    const [googleMapsReady, setGoogleMapsReady] = useState(false);
+    const [autocomplete, setAutocomplete] = useState(null);
+
+    // Initialisation de Google Maps API
+    useEffect(() => {
+        // Vérifier si l'API est déjà chargée
+        if (window.google && window.google.maps && window.google.maps.places) {
+            setGoogleMapsReady(true);
+            return;
+        }
+
+        // Vérifier si un script Google Maps existe déjà
+        const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
+        if (existingScript) {
+            // Attendre que le script existant se charge
+            const checkGoogleMaps = setInterval(() => {
+                if (window.google && window.google.maps && window.google.maps.places) {
+                    setGoogleMapsReady(true);
+                    clearInterval(checkGoogleMaps);
+                }
+            }, 100);
+            
+            return () => clearInterval(checkGoogleMaps);
+        }
+
+        // Créer un nom de callback unique pour éviter les conflits
+        const callbackName = `initGooglePlacesAPISearchbar_${Date.now()}`;
+        
+        window[callbackName] = () => {
+            setGoogleMapsReady(true);
+            delete window[callbackName];
+        };
+
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places&callback=${callbackName}&loading=async`;
+        script.async = true;
+        script.defer = true;
+        script.onerror = () => {
+            console.error('Erreur lors du chargement de Google Maps API');
+            delete window[callbackName];
+        };
+
+        document.head.appendChild(script);
+
+        return () => {
+            if (document.head.contains(script) && !window.google) {
+                document.head.removeChild(script);
+            }
+            if (window[callbackName]) {
+                delete window[callbackName];
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        if (googleMapsReady) {
+            initializeAutocomplete();
+        }
+    }, [googleMapsReady]);
+
+    const initializeAutocomplete = () => {
+        const searchInput = document.getElementById('location-search-input');
+        if (!searchInput) return;
+
+        const autocompleteInstance = new window.google.maps.places.Autocomplete(searchInput, {
+            componentRestrictions: { country: 'fr' },
+            fields: ['address_components', 'geometry', 'formatted_address', 'name', 'types'],
+            types: ['geocode'] // Types pour rechercher des adresses et des villes
+        });
+
+        setAutocomplete(autocompleteInstance);
+
+        autocompleteInstance.addListener('place_changed', () => {
+            const place = autocompleteInstance.getPlace();
+
+            if (!place.geometry) {
+                console.error("Aucune information géographique trouvée pour ce lieu.");
+                return;
+            }
+
+            // Analyser le type de lieu pour déterminer le rayon approprié
+            const placeTypes = place.types || [];
+            
+            // Déterminer si c'est une ville ou une adresse précise
+            const isCityLevel = placeTypes.some(type => 
+                ['locality', 'administrative_area_level_2', 'administrative_area_level_1', 'sublocality'].includes(type)
+            );
+            
+            const isSpecificAddress = placeTypes.some(type => 
+                ['street_address', 'premise', 'establishment', 'point_of_interest'].includes(type)
+            );
+
+            // Extraire les informations de la ville
+            let cityName = '';
+            let postalCode = '';
+            
+            if (place.address_components) {
+                place.address_components.forEach(component => {
+                    if (component.types.includes('locality')) {
+                        cityName = component.long_name;
+                    } else if (component.types.includes('postal_code')) {
+                        postalCode = component.short_name;
+                    }
+                });
+            }
+
+            const locationData = {
+                name: place.name || place.formatted_address,
+                formatted_address: place.formatted_address,
+                coordinates: {
+                    latitude: place.geometry.location.lat(),
+                    longitude: place.geometry.location.lng()
+                },
+                city: cityName,
+                postalCode: postalCode,
+                address_components: place.address_components,
+                types: placeTypes,
+                searchType: isCityLevel ? 'city' : (isSpecificAddress ? 'address' : 'general'),
+                radius: isCityLevel ? null : 5 // null pour ville (pas de limite), 5km pour adresse
+            };
+
+            console.log('Lieu sélectionné:', locationData);
+
+            // Callback vers le composant parent
+            if (onLocationSelected) {
+                onLocationSelected(locationData);
+            }
+
+            setSearchValue(place.name || place.formatted_address);
+        });
+    };
+
+    const handleSearchChange = (e) => {
+        setSearchValue(e.target.value);
+    };
+
+    const handleClearSearch = () => {
+        setSearchValue('');
+        if (onLocationSelected) {
+            onLocationSelected(null); // Clear la sélection de lieu
+        }
+    };
+
+    const handleSearchSubmit = (e) => {
+        e.preventDefault();
+        // La recherche se fait automatiquement via l'autocomplete
+    };
 
     const toggleFilter = () => {
         setIsFilterOpen(!isFilterOpen);
@@ -273,18 +423,30 @@ const Searchbar = ({onFiltersApplied, onClearFilters, hasActiveFilters}) => {
         <>
             <div className="w-full max-w-md mx-auto px-4">
                 <div className="relative w-full mb-4">
-                    <form className="relative">
+                    <form onSubmit={handleSearchSubmit} className="relative">
                         <div className="flex items-center bg-gray-100 rounded-xl">
                             <SearchIcon className="ml-4 text-gray-500" width={20} height={20}/>
                             <Input
+                                id="location-search-input"
                                 type="search"
-                                placeholder="Rechercher un lieu..."
+                                placeholder="Rechercher une ville ou adresse..."
+                                value={searchValue}
+                                onChange={handleSearchChange}
                                 className="border-0 bg-transparent px-2 py-3 focus:ring-0 focus:outline-none w-full"
                             />
+                            {searchValue && (
+                                <button
+                                    type="button"
+                                    onClick={handleClearSearch}
+                                    className="p-2 text-gray-500 hover:text-gray-700"
+                                >
+                                    <IoMdClose size={16} />
+                                </button>
+                            )}
                             <button
                                 type="button"
                                 onClick={toggleFilter}
-                                className={`p-3 text-white rounded-r-xl flex items-center justify-center transition-colors ${
+                                className={`p-3 text-white rounded-r-xl flex items-center justify-center transition-colors relative ${
                                     hasActiveFilters ? 'bg-green-600' : 'bg-button-green'
                                 }`}
                             >
