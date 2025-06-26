@@ -11,7 +11,6 @@ const instance = axios.create({
 
 instance.interceptors.request.use(
     (config) => {
-        console.log('Request:', config.url, config.method);
         const token = localStorage.getItem('token');
         if (token) {
             config.headers['Authorization'] = `Bearer ${token}`;
@@ -26,7 +25,6 @@ instance.interceptors.request.use(
 
 instance.interceptors.response.use(
     (response) => {
-        console.log('Response:', response.status);
         return response;
     },
     (error) => {

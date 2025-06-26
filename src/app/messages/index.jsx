@@ -521,17 +521,15 @@ export default function MessagerieApp() {
         createConversation
     } = useChat();
 
-    // Poll for new messages in the selected conversation
     usePolling(
         () => pollNewMessages(selectedConversation?.id),
-        2000, // Poll every 2 seconds
+        2000,
         isPollingEnabled && selectedConversation !== null
     );
 
-    // Poll for unread counts
     usePolling(
         pollUnreadCounts,
-        5000, // Poll every 5 seconds
+        5000,
         isPollingEnabled
     );
 
@@ -552,37 +550,25 @@ export default function MessagerieApp() {
         loadConversations();
     }, [loadConversations]);
 
-    // Auto-scroll to bottom when new messages arrive
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    // Handle typing indicator
     const handleTyping = useCallback(() => {
         if (!selectedConversation) return;
 
-        // Clear previous timeout
         if (typingTimeoutRef.current) {
             clearTimeout(typingTimeoutRef.current);
         }
-
-        // Simulate sending typing indicator to server
-        // In a real app, you'd send this to your WebSocket or API
-        console.log('User is typing in conversation:', selectedConversation.id);
-
-        // Stop typing after 3 seconds of inactivity
         typingTimeoutRef.current = setTimeout(() => {
-            console.log('User stopped typing');
         }, 3000);
     }, [selectedConversation]);
 
-    // Handle input change with typing indicator
     const handleMessageChange = useCallback((e) => {
         setNewMessage(e.target.value);
         handleTyping();
     }, [handleTyping]);
 
-    // Debounced search
     useEffect(() => {
         if (searchDebounceRef.current) {
             clearTimeout(searchDebounceRef.current);

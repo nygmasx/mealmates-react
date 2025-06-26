@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import axiosConfig from "@/context/axiosConfig.js";
 import { FaRegClock, FaMapMarkerAlt, FaUser, FaPhone, FaShoppingCart } from "react-icons/fa";
 import { IoMdHeart, IoMdClose } from "react-icons/io";
-import { FiSearch, FiArrowLeft } from "react-icons/fi";
+import { FiSearch, FiArrowLeft, FiMessageCircle } from "react-icons/fi";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from 'react-router';
 import Layout from '../Layout';
 
 const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
+    const navigate = useNavigate();
     const [quantity, setQuantity] = useState(1);
     const [isLoading, setPurchaseLoading] = useState(false);
 
@@ -50,6 +51,17 @@ const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
             console.error('Erreur lors de l\'achat:', error);
         } finally {
             setPurchaseLoading(false);
+        }
+    };
+
+    const handleContactSeller = () => {
+        if (product?.seller) {
+            navigate('/messages/contact', {
+                state: {
+                    product: product,
+                    seller: product.seller
+                }
+            });
         }
     };
 
@@ -191,13 +203,22 @@ const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
                 </div>
 
                 <div className="sticky bottom-0 bg-white border-t p-4">
-                    <div className="flex gap-3">
+                    <div className="flex gap-2">
                         <button
                             onClick={onClose}
                             className="flex-1 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
                         >
                             Annuler
                         </button>
+                        {product.seller && (
+                            <button
+                                onClick={handleContactSeller}
+                                className="flex-1 py-3 border border-[#53B175] text-[#53B175] font-medium rounded-lg hover:bg-[#53B175]/5 transition-colors flex items-center justify-center"
+                            >
+                                <FiMessageCircle className="mr-2" />
+                                Contacter
+                            </button>
+                        )}
                         <button
                             onClick={handlePurchase}
                             disabled={isLoading}
@@ -327,7 +348,7 @@ function OffersList() {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [sortBy, setSortBy] = useState('recent'); // recent, price-low, price-high, expiration
+    const [sortBy, setSortBy] = useState('recent');
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -336,7 +357,6 @@ function OffersList() {
                 setError(null);
 
                 const response = await axiosConfig.get('/product/');
-                console.log('API Response:', response.data);
 
                 let productsArray = [];
                 if (Array.isArray(response.data)) {
@@ -370,7 +390,6 @@ function OffersList() {
     useEffect(() => {
         let filtered = [...products];
 
-        // Recherche
         if (searchTerm) {
             filtered = filtered.filter(product =>
                 (product.title && product.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -379,7 +398,6 @@ function OffersList() {
             );
         }
 
-        // Tri
         filtered.sort((a, b) => {
             switch (sortBy) {
                 case 'price-low':

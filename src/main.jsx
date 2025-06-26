@@ -21,6 +21,7 @@ import OfferSuccess from "@/app/offers/OfferSuccess.jsx";
 import Search from "@/app/products/index.jsx";
 import RegisterConfirmation from "@/app/auth/RegisterConfirmation.jsx";
 import Messages from "@/app/messages/index.jsx"
+import MessageProductOwner from "@/app/messages/MessageProductOwner.jsx";
 import OffersList from "@/app/products/list.jsx";
 import ProfileProducts from "@/app/profile/products.jsx";
 
@@ -48,6 +49,7 @@ createRoot(document.getElementById("root")).render(
             <Route path="/offers/create" element={<CreateOffer />} />
             <Route path="/offers/success" element={<OfferSuccess />} />
             <Route path="/messages" element={<Messages />} />
+            <Route path="/messages/contact" element={<MessageProductOwner />} />
           </Route>
         </Routes>
       </BrowserRouter>

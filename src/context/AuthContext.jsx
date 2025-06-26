@@ -19,7 +19,6 @@ export const AuthProvider = ({ children }) => {
                 try {
                     const response = await axiosConfig.get("/user/profile");
 
-                    // Include token in user object
                     setUser({ ...response.data, token });
                     setIsAuthenticated(true);
                 } catch (error) {
@@ -49,16 +48,12 @@ export const AuthProvider = ({ children }) => {
     };
 
     const login = async (email, password) => {
-        console.log(email, password)
         const response = await axiosConfig.post("/login_check", {
             email,
             password
         });
-        console.log('This response : ', response)
 
         const token = response.data.token;
-
-        console.log(token)
 
         axiosConfig.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
@@ -72,7 +67,6 @@ export const AuthProvider = ({ children }) => {
 
         localStorage.setItem("token", token);
 
-        // Include token in user object
         const userWithToken = { ...userResponse.data, token };
         setUser(userWithToken);
         setIsAuthenticated(true);

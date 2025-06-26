@@ -325,7 +325,6 @@ const Search = () => {
                 setError(null);
 
                 const response = await axiosConfig.get('/product/');
-                console.log('API Response:', response.data);
 
                 let productsArray = [];
                 if (Array.isArray(response.data)) {
@@ -353,8 +352,6 @@ const Search = () => {
 
         fetchProducts();
     }, []);
-
-    console.log("there ", products)
 
     const getProductsByCategory = (category) => {
         if (!products || products.length === 0) return [];

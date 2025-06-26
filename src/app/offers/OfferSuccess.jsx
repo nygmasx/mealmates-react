@@ -25,7 +25,7 @@ const OfferSuccess = () => {
                 text: 'J\'ai publié une nouvelle offre sur MealMates!',
                 url: `${window.location.origin}/offers/${offerId}`,
             })
-                .catch(error => console.log('Erreur de partage:', error));
+                .catch(error => console.error('Erreur de partage:', error));
         } else {
             const shareUrl = `${window.location.origin}/offers/${offerId}`;
             navigator.clipboard.writeText(shareUrl)

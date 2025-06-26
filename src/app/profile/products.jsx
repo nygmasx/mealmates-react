@@ -231,7 +231,6 @@ function ProfileProducts() {
             setError(null);
 
             const response = await axiosConfig.get('/product/me');
-            console.log('My Products Response:', response.data);
 
             let productsArray = [];
             if (Array.isArray(response.data)) {
@@ -313,10 +312,7 @@ function ProfileProducts() {
     }, [products, searchTerm, sortBy, filterStatus]);
 
     const handleEdit = (product) => {
-        console.log('Modifier produit:', product);
-        // Navigation vers page d'édition
-        // window.location.href = `/products/edit/${product.id}`;
-        alert(`Redirection vers l'édition de ${product.title}`);
+
     };
 
     const handleDelete = (product) => {
@@ -332,7 +328,6 @@ function ProfileProducts() {
             setProducts(prev => prev.filter(p => p.id !== productId));
             setDeleteModal({isOpen: false, product: null});
 
-            console.log('Produit supprimé avec succès');
 
         } catch (error) {
             console.error('Erreur lors de la suppression:', error);
@@ -353,8 +348,6 @@ function ProfileProducts() {
             setProducts(prev => prev.map(p =>
                 p.id === product.id ? {...p, isActive: newStatus} : p
             ));
-
-            console.log(`Produit ${newStatus ? 'activé' : 'désactivé'}`);
 
         } catch (error) {
             console.error('Erreur lors de la modification du statut:', error);

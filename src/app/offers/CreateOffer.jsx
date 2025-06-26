@@ -462,12 +462,6 @@ const CreateOffer = () => {
                 });
             }
 
-            console.log('=== DONNÉES ENVOYÉES ===');
-            for (let [key, value] of offerData.entries()) {
-                console.log(`${key}:`, value);
-            }
-            console.log('========================');
-
             const response = await axiosConfig.post('/product', offerData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'

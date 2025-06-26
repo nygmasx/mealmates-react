@@ -13,7 +13,7 @@ const AuthIndex = () => {
                 <div className="flex flex-col gap-6">
                     <form>
                         <div className="flex flex-col gap-6">
-                            <div className="flex flex-col items-center w-full gap-10">
+                            <div className  ="flex flex-col items-center w-full gap-10">
                                 <div className="flex flex-col items-center gap-2">
                                     <h1 className="text-3xl font-medium">
                                         Sauvons des repas, <br/> Rejoignez MealMates.
