@@ -143,21 +143,15 @@ const MessageProductOwner = () => {
                         </div>
                     </div>
 
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                        <h3 className="font-medium text-blue-900 mb-2">Conseils pour votre message</h3>
-                        <ul className="text-sm text-blue-800 space-y-1">
-                            <li>• Présentez-vous brièvement</li>
-                            <li>• Posez vos questions sur le produit</li>
-                            <li>• Proposez un créneau de récupération</li>
-                            <li>• Restez poli et respectueux</li>
-                        </ul>
-                    </div>
-
                     {error && (
                         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
                             <p className="text-red-800 text-sm">{error}</p>
                         </div>
                     )}
+                </div>
+
+                <div className="">
+
                 </div>
 
                 <div className="bg-white border-t p-4">
@@ -166,7 +160,7 @@ const MessageProductOwner = () => {
                             <textarea
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
-                                onKeyPress={handleKeyPress}
+                                onSubmit={handleKeyPress}
                                 placeholder="Écrivez votre message..."
                                 className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:border-[#53B175] focus:ring-1 focus:ring-[#53B175] transition-colors"
                                 rows={3}

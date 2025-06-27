@@ -50,6 +50,7 @@ const useChat = () => {
         try {
             setError(null);
             const response = await axiosConfig.get('/chat/list');
+            console.log(response)
             setConversations(response.data);
         } catch (error) {
             console.error('Error loading conversations:', error);

@@ -8,12 +8,12 @@ function App() {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <div className="font-inter">
-      <header className="min-h-screen bg-[url('/public/assets/header-background.png')] bg-center bg-cover bg-no-repeat relative">
+      <header className="min-h-screen bg-[url('/assets/header-background.png')] bg-center bg-cover bg-no-repeat relative">
         <div className="mx-auto w-full max-w-7xl px-6 md:px-8 lg:px-12">
           <div className="py-6 md:py-8">
             <div className="flex items-center">
               <div className="w-full mb-7/8 md:w-1/6 text-center md:text-left mb-3 md:mb-0">
-                <img className="max-h-16 inline-block" src="../../public/assets/logo-mealmates.png" alt="logo" />
+                <img className="max-h-16 inline-block" src="/assets/logo-mealmates.png" alt="logo" />
               </div>
 
               <nav className="hidden md:flex">
@@ -64,7 +64,7 @@ function App() {
               </div>
 
               <div className="w-full lg:w-1/2 text-center">
-                <img className="max-w-4/5 inline-block" src="../../public/assets/preview-mobile.png" alt="application-mobile" />
+                <img className="max-w-4/5 inline-block" src="/assets/preview-mobile.png" alt="application-mobile" />
               </div>
             </div>
           </div>
@@ -84,33 +84,33 @@ function App() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-center">
               <div className="mb-5 flex flex-col">
-                <img className="mx-auto mb-4" src="../../public/assets/mdi_neighbourhood.png" alt="fonctionnalité" />
+                <img className="mx-auto mb-4" src="/assets/mdi_neighbourhood.png" alt="fonctionnalité" />
                 <h3 className="text-xl md:text-2xl font-bold">Partager vos plats faits maison</h3>
                 <p className="px-2 md:px-4 my-auto pt-3">Transformez vos surplus culinaires en opportunités de partage avec votre communauté locale et réduisez le gaspillage alimentaire tout en valorisant vos talents de cuisinier.</p>
               </div>
               <div className="mb-5 flex flex-col">
-                <img className="mx-auto mb-4" src="../../public/assets/mdi_fish-food.png" alt="fonctionnalité" />
+                <img className="mx-auto mb-4" src="/assets/mdi_fish-food.png" alt="fonctionnalité" />
                 <h3 className="text-xl md:text-2xl font-bold">Découvrez des saveurs uniques</h3>
                 <p className="px-2 md:px-4 my-auto pt-3">Explorez une diversité de plats préparés par vos voisins, découvrez de nouvelles cuisines et savourez des repas authentiques que vous ne trouverez pas ailleurs.</p>
               </div>
               <div className="mb-5 flex flex-col">
-                <img className="mx-auto mb-4" src="../../public/assets/game-icons_receive-money.png" alt="fonctionnalité" />
+                <img className="mx-auto mb-4" src="/assets/game-icons_receive-money.png" alt="fonctionnalité" />
                 <h3 className="text-xl md:text-2xl font-bold">Réduisez votre budget repas</h3>
                 <p className="px-2 md:px-4 my-auto pt-3">Accédez à des plats délicieux à prix réduits tout en permettant aux cuisiniers amateurs de rentabiliser leurs préparations en trop.</p>
               </div>
 
               <div className="mb-5 flex flex-col">
-                <img className="mx-auto mb-4" src="../../public/assets/fa-solid_hands-helping.png" alt="fonctionnalité" />
+                <img className="mx-auto mb-4" src="/assets/fa-solid_hands-helping.png" alt="fonctionnalité" />
                 <h3 className="text-xl md:text-2xl font-bold">Créez des liens</h3>
                 <p className="px-2 md:px-4 mb-auto pt-3">Rencontrez les passionnés de cuisine autour de chez vous, échangez autour d'une passion commune et tissez des liens authentiques dans votre communauté.</p>
               </div>
               <div className="mb-5 flex flex-col">
-                <img className="mx-auto mb-4" src="../../public/assets/fa6-solid_earth-africa.png" alt="fonctionnalité" />
+                <img className="mx-auto mb-4" src="/assets/fa6-solid_earth-africa.png" alt="fonctionnalité" />
                 <h3 className="text-xl md:text-2xl font-bold">Préservez notre planète</h3>
                 <p className="px-2 md:px-4 my-auto pt-3">Chaque repas partagé sur MealMates représente un geste concret pour l'environnement en limitant le gaspillage alimentaire et l'empreinte carbone liée à la production alimentaire.</p>
               </div>
               <div className="mb-5 flex flex-col">
-                <img className="mx-auto mb-4" src="../../public/assets/Base_feature_icon.png" alt="fonctionnalité" />
+                <img className="mx-auto mb-4" src="/assets/Base_feature_icon.png" alt="fonctionnalité" />
                 <h3 className="text-xl md:text-2xl font-bold">Simplifiez votre quotidien</h3>
                 <p className="px-2 md:px-4 my-auto pt-3">Une interface intuitive pour proposer ou trouver des plats près de chez vous, des paiements sécurisés et un système d'évaluation transparent pour des échanges en toute confiance.</p>
               </div>
@@ -160,16 +160,16 @@ function App() {
             <div className="flex flex-col lg:flex-row">
               <div className="w-full lg:w-5/12 mb-5 lg:mb-0">
                 <div className=" mb-5">
-                  <img className="hidden lg:block " src="../../public/assets/quote_mark.png" />
+                  <img className="hidden lg:block " src="/assets/quote_mark.png" />
                   <h4 className="font-bold mb-2 text-2xl md:text-3xl">Témoignages de clients réels</h4>
                   <span>Inspirez-vous de ces histoires.</span>
                 </div>
                 <div className="bg-gray-700 rounded-lg p-6 md:p-8 mb-6">
                   <div className="relative pt-2">
-                    <img className="absolute top-0 left-0" src="../../public/assets/small_quote_mark.png" />
+                    <img className="absolute top-0 left-0" src="/assets/small_quote_mark.png" />
                     <p className="pl-4">Service impeccable et concept éthique ! J'apprécie particulièrement la transparence sur les dates de péremption et les descriptions précises des produits. La livraison est toujours ponctuelle et l'application facile à utiliser. Je recommande vivement à tous ceux qui souhaitent consommer de manière plus responsable sans se ruiner.</p>
                     <div className="flex items-center mt-4">
-                      <img className="" src="../../public/assets/user-icon-default.png" />
+                      <img className="" src="/assets/user-icon-default.png" />
                       <p className="font-bold ms-4">Sophie M.</p>
                     </div>
                   </div>
@@ -180,10 +180,10 @@ function App() {
                   <div className="w-full md:w-10/12 lg:w-9/12 ms-0 sm:ms-5 mb-4">
                     <div className="bg-gray-700 rounded-lg p-6 md:p-8">
                       <div className="relative pt-2">
-                        <img className="absolute top-0 left-0" src="../../public/assets/small_quote_mark.png" />
+                        <img className="absolute top-0 left-0" src="/assets/small_quote_mark.png" />
                         <p className="pl-4">Grâce à ce service, je fais des économies considérables tout en contribuant à la lutte contre le gaspillage alimentaire ! J'ai découvert de nouveaux produits que je n'aurais jamais essayés autrement. La qualité est toujours au rendez-vous malgré les dates courtes. Un concept brillant et responsable.</p>
                         <div className="flex items-center mt-4">
-                          <img className="" src="../../public/assets/user-icon-default.png" />
+                          <img className="" src="/assets/user-icon-default.png" />
                           <p className="font-bold ms-4">Marie L.</p>
                         </div>
                       </div>
@@ -192,10 +192,10 @@ function App() {
                   <div className="w-full md:w-8/12 lg:w-9/12 ms-0 sm:ms-5">
                     <div className="bg-gray-700 rounded-lg p-5">
                       <div className="relative pt-2">
-                        <img className="absolute top-0 left-0" src="../../public/assets/small_quote_mark.png" />
+                        <img className="absolute top-0 left-0" src="/assets/small_quote_mark.png" />
                         <p className="pl-4">En tant que famille nombreuse, ce site est une véritable aubaine. Les paniers surprises nous permettent de varier notre alimentation à petit prix. Les enfants adorent découvrir ce que contient le colis, c'est devenu notre petit rituel hebdomadaire. Et quel plaisir de savoir que nous sauvons ces produits de la poubelle !</p>
                         <div className="flex items-center mt-4">
-                          <img className="" src="../../public/assets/user-icon-default.png" />
+                          <img className="" src="/assets/user-icon-default.png" />
                           <p className="font-bold ms-4">Thomas D.</p>
                         </div>
                       </div>
@@ -212,7 +212,7 @@ function App() {
         <div className="w-full bg-gray-900 text-gray-100 border-t border-gray-800 px-6 md:px-12 py-10">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:justify-between gap-10">
             <div className="mb-8 md:mb-0 md:w-1/4 flex justify-center md:justify-start">
-              <img className="max-h-16" src="../../public/assets/logo-mealmates.png" alt="logo" />
+              <img className="max-h-16" src="/assets/logo-mealmates.png" alt="logo" />
             </div>
             <div className="mb-8 md:mb-0 md:w-1/4 flex flex-col items-center md:items-start">
               <span className="font-bold text-lg mb-3">Liens rapides</span>
