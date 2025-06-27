@@ -16,7 +16,7 @@ const LocationMarker = ({ position }) => {
   );
 };
 
-const MapController = ({ onLocateClick, setPosition }) => {
+const MapController = ({ onLocateClick, setPosition, searchLocation }) => {
   const map = useMap();
 
   useEffect(() => {
@@ -54,6 +54,16 @@ const MapController = ({ onLocateClick, setPosition }) => {
     };
   }, [map, setPosition, onLocateClick]);
 
+  // Gérer le déplacement de la carte vers la localisation recherchée
+  useEffect(() => {
+    if (searchLocation && searchLocation.coordinates) {
+      const { latitude, longitude } = searchLocation.coordinates;
+      const newPosition = [latitude, longitude];
+      setPosition(newPosition);
+      map.flyTo(newPosition, 14); // Zoom plus proche pour une recherche spécifique
+    }
+  }, [searchLocation, map, setPosition]);
+
   return null;
 };
 
@@ -66,6 +76,7 @@ const Map = () => {
   const [filterLoading, setFilterLoading] = useState(false);
   const [error, setError] = useState(null);
   const [geocodingProgress, setGeocodingProgress] = useState({ current: 0, total: 0 });
+  const [selectedLocation, setSelectedLocation] = useState(null);
   const locateFunctionRef = useRef(null);
 
   const handleSetLocateFunction = useCallback((fn) => {
@@ -78,6 +89,13 @@ const Map = () => {
     }
   };
 
+  // Gérer la sélection d'une localisation depuis la searchbar (navigation uniquement)
+  const handleLocationSelected = useCallback((locationData) => {
+    console.log('Localisation sélectionnée:', locationData);
+    setSelectedLocation(locationData);
+  }, []);
+
+  // Gérer l'application des filtres (sans filtrage par localisation)
   const handleFiltersApplied = useCallback(async (filteredData) => {
     if (filteredData && filteredData.length > 0) {
       setFilterLoading(true);
@@ -85,6 +103,7 @@ const Map = () => {
         const geocodedFilteredProducts = await geocodeProducts(filteredData);
         setFilteredProducts(geocodedFilteredProducts);
       } catch (error) {
+        console.error('Erreur lors du filtrage:', error);
       } finally {
         setFilterLoading(false);
         setGeocodingProgress({ current: 0, total: 0 });
@@ -95,8 +114,10 @@ const Map = () => {
     }
   }, []);
 
+  // Gérer l'effacement des filtres
   const handleClearFilters = useCallback(() => {
     setFilteredProducts([]);
+    setSelectedLocation(null);
     setFilterLoading(false);
     setGeocodingProgress({ current: 0, total: 0 });
   }, []);
@@ -174,6 +195,7 @@ const Map = () => {
     }
   }, [latitude, longitude]);
 
+  // Afficher tous les produits ou les produits filtrés (sans filtrage par localisation)
   const displayedProducts = filteredProducts.length > 0 ? filteredProducts : products;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -186,6 +208,9 @@ const Map = () => {
     const isNotExpired = new Date(productData.expiresAt) >= today;
     return hasValidCoordinates && isNotExpired;
   });
+
+  // Vérifier s'il y a des filtres actifs
+  const hasActiveFilters = filteredProducts.length > 0;
 
   return (
     <Layout>
@@ -210,13 +235,15 @@ const Map = () => {
             <MapController 
               onLocateClick={handleSetLocateFunction} 
               setPosition={setCurrentPosition}
+              searchLocation={selectedLocation}
             />
           </MapContainer>
           <div className="fixed top-4 left-0 right-0 z-[1000]">
             <Searchbar 
               onFiltersApplied={handleFiltersApplied}
               onClearFilters={handleClearFilters}
-              hasActiveFilters={filteredProducts.length > 0}
+              hasActiveFilters={hasActiveFilters}
+              onLocationSelected={handleLocationSelected}
             />
           </div>
           <div className="absolute bottom-28 right-4 z-[900]">
@@ -254,7 +281,7 @@ const Map = () => {
               <span className="text-sm">{error}</span>
             </div>
           )}
-          {filteredProducts.length > 0 && (
+          {hasActiveFilters && (
             <div className="absolute top-20 left-4 z-[999] bg-green-100 border border-green-400 text-green-700 rounded-lg px-3 py-2">
               <span className="text-sm">
                 {validProducts.length} produit{validProducts.length !== 1 ? 's' : ''} filtré{validProducts.length !== 1 ? 's' : ''}

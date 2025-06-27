@@ -262,8 +262,89 @@ const FilterPanel = ({isOpen, onClose, onFiltersApplied}) => {
     );
 };
 
-const Searchbar = ({onFiltersApplied, onClearFilters, hasActiveFilters}) => {
+const Searchbar = ({onFiltersApplied, onClearFilters, hasActiveFilters, onLocationSelected}) => {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [searchValue, setSearchValue] = useState('');
+    const [googleMapsReady, setGoogleMapsReady] = useState(false);
+
+    // Initialisation de Google Maps API (similaire à Address.jsx)
+    useEffect(() => {
+        if (window.google && window.google.maps && window.google.maps.places) {
+            setGoogleMapsReady(true);
+            initializeAutocomplete();
+            return;
+        }
+
+        window.initGooglePlacesAPISearchbar = () => {
+            setGoogleMapsReady(true);
+        };
+
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&libraries=places&callback=initGooglePlacesAPISearchbar`;
+        script.async = true;
+        script.defer = true;
+
+        document.head.appendChild(script);
+
+        return () => {
+            if (document.head.contains(script)) {
+                document.head.removeChild(script);
+            }
+            delete window.initGooglePlacesAPISearchbar;
+        };
+    }, []);
+
+    useEffect(() => {
+        if (googleMapsReady) {
+            initializeAutocomplete();
+        }
+    }, [googleMapsReady]);
+
+    const initializeAutocomplete = () => {
+        const searchInput = document.getElementById('location-search-input');
+        if (!searchInput) return;
+
+        const autocomplete = new window.google.maps.places.Autocomplete(searchInput, {
+            componentRestrictions: { country: 'fr' },
+            fields: ['address_components', 'geometry', 'formatted_address', 'name'],
+            types: ['establishment', 'geocode'] // Pour rechercher des lieux et adresses
+        });
+
+        autocomplete.addListener('place_changed', () => {
+            const place = autocomplete.getPlace();
+
+            if (!place.geometry) {
+                console.error("Aucune information sur ce lieu.");
+                return;
+            }
+
+            const locationData = {
+                name: place.name || place.formatted_address,
+                formatted_address: place.formatted_address,
+                coordinates: {
+                    latitude: place.geometry.location.lat(),
+                    longitude: place.geometry.location.lng()
+                },
+                address_components: place.address_components
+            };
+
+            // Callback vers le composant parent avec les données de localisation
+            if (onLocationSelected) {
+                onLocationSelected(locationData);
+            }
+
+            setSearchValue(place.name || place.formatted_address);
+        });
+    };
+
+    const handleSearchChange = (e) => {
+        setSearchValue(e.target.value);
+    };
+
+    const handleSearchSubmit = (e) => {
+        e.preventDefault();
+        // Gérer la recherche manuelle si nécessaire
+    };
 
     const toggleFilter = () => {
         setIsFilterOpen(!isFilterOpen);
@@ -273,18 +354,21 @@ const Searchbar = ({onFiltersApplied, onClearFilters, hasActiveFilters}) => {
         <>
             <div className="w-full max-w-md mx-auto px-4">
                 <div className="relative w-full mb-4">
-                    <form className="relative">
+                    <form onSubmit={handleSearchSubmit} className="relative">
                         <div className="flex items-center bg-gray-100 rounded-xl">
                             <SearchIcon className="ml-4 text-gray-500" width={20} height={20}/>
                             <Input
+                                id="location-search-input"
                                 type="search"
                                 placeholder="Rechercher un lieu..."
+                                value={searchValue}
+                                onChange={handleSearchChange}
                                 className="border-0 bg-transparent px-2 py-3 focus:ring-0 focus:outline-none w-full"
                             />
                             <button
                                 type="button"
                                 onClick={toggleFilter}
-                                className={`p-3 text-white rounded-r-xl flex items-center justify-center transition-colors ${
+                                className={`p-3 text-white rounded-r-xl flex items-center justify-center transition-colors relative ${
                                     hasActiveFilters ? 'bg-green-600' : 'bg-button-green'
                                 }`}
                             >
