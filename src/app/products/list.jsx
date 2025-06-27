@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axiosConfig from "@/context/axiosConfig.js";
 import { FaRegClock, FaMapMarkerAlt, FaUser, FaPhone, FaShoppingCart } from "react-icons/fa";
-import { IoMdHeart, IoMdClose } from "react-icons/io";
 import { FiSearch, FiArrowLeft, FiMessageCircle } from "react-icons/fi";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from 'react-router';
@@ -100,9 +99,6 @@ const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
                                 -{product.discount}%
                             </div>
                         )}
-                        <button className="absolute top-3 right-3 bg-white p-2 rounded-full shadow-lg">
-                            <IoMdHeart className={product.isFavorite ? "text-red-500" : "text-gray-300"} size={20} />
-                        </button>
                     </div>
 
                     <div className="">
@@ -126,7 +122,6 @@ const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
                                 </div>
                             )}
                         </div>
-
                         {product.expirationDate && (
                             <div className="flex items-center mb-3 text-gray-600">
                                 <FaRegClock className="mr-2" size={14} />
@@ -263,14 +258,6 @@ const ProductGridCard = ({ product, onClick }) => {
                         -{product.discount}%
                     </div>
                 )}
-                <button
-                    className="absolute top-2 right-2 bg-white p-1.5 rounded-full shadow-md"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                    }}
-                >
-                    <IoMdHeart className={product.isFavorite ? "text-red-500" : "text-gray-300"} size={18} />
-                </button>
             </div>
 
             <div className="p-3">

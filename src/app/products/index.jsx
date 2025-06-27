@@ -57,9 +57,6 @@ const ProductCard = ({ product }) => {
                         -{product.discount}%
                     </div>
                 )}
-                <button className="absolute top-2 right-2 bg-white p-1.5 rounded-full shadow-md">
-                    <IoMdHeart className={product.isFavorite ? "text-red-500" : "text-gray-300"} size={18} />
-                </button>
             </div>
             <div className="p-2.5">
                 <p className="text-sm font-medium truncate">{product.title}</p>
@@ -236,14 +233,14 @@ const FilterPanel = ({ isOpen, onClose, onApply }) => {
                             <button
                                 key={key}
                                 className={`
-                  border rounded-lg p-3 text-left transition-colors
-                  ${selectedType === key ? 'bg-green-100 border-button-green' : 'border-gray-300'}
-                `}
+                                    border rounded-lg p-3 text-left transition-colors
+                                    ${selectedType === key ? 'bg-green-100 border-button-green' : 'border-gray-300'}
+                                `}
                                 onClick={() => handleTypeChange(key)}
                             >
-                <span className={selectedType === key ? 'text-button-green' : 'text-gray-700'}>
-                  {value}
-                </span>
+                            <span className={selectedType === key ? 'text-button-green' : 'text-gray-700'}>
+                            {value}
+                            </span>
                             </button>
                         ))}
                     </div>
