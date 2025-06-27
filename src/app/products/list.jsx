@@ -74,8 +74,8 @@ const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
 
     return (
         <div className="fixed inset-0 bg-opacity-50 z-[999] flex items-end">
-            <div className="bg-white w-full max-h-[90vh] rounded-t-2xl overflow-y-auto">
-                <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
+            <div className="bg-gray-100 w-full max-h-[90vh] rounded-t-2xl overflow-y-auto">
+                <div className="sticky top-0 bg-[#53b1753d] p-4 flex justify-between items-center">
                     <h2 className="text-xl font-semibold">Détails du produit</h2>
                     <button
                         onClick={onClose}
@@ -85,7 +85,7 @@ const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
                     </button>
                 </div>
 
-                <div className="p-4">
+                <div className="bg-[#53b1753d] p-4">
                     <div className="relative mb-4">
                         <img
                             src={getImageUrl(product)}
@@ -105,24 +105,24 @@ const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
                         </button>
                     </div>
 
-                    <div className="mb-4">
+                    <div className="">
                         <h3 className="text-2xl font-bold mb-2">{product.title || product.name}</h3>
-
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex flex-col">
                                 <span className="text-2xl font-bold text-button-green">
                                     {isFree ? 'Gratuit' : `${formatPrice(product.price)}€`}
                                 </span>
                                 {product.originalPrice && (
-                                    <span className="text-lg text-gray-400 line-through ml-2">
+                                    <span className="text-lg text-gray-400 line-through">
                                         {formatPrice(product.originalPrice)}€
                                     </span>
                                 )}
                             </div>
-                            {product.distance && (
-                                <div className="flex items-center text-gray-500">
-                                    <FaMapMarkerAlt className="mr-1" size={12} />
-                                    <span className="text-sm">{product.distance}km</span>
+                            {!isFree && (
+                                <div className="flex flex-col items-end ml-4">
+                                    <span className="text-sm text-gray-600">
+                                        <span className="font-medium">Qté:</span> {product.quantity}
+                                    </span>
                                 </div>
                             )}
                         </div>
@@ -173,36 +173,9 @@ const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
                             </div>
                         )}
                     </div>
-
-                    {!isFree && (
-                        <div className="border-t pt-4 mb-4">
-                            <h4 className="font-semibold mb-3">Quantité</h4>
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center border border-gray-300 rounded-lg">
-                                    <button
-                                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                        className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-l-lg"
-                                    >
-                                        -
-                                    </button>
-                                    <span className="px-4 py-2 border-x border-gray-300">{quantity}</span>
-                                    <button
-                                        onClick={() => setQuantity(quantity + 1)}
-                                        className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-r-lg"
-                                    >
-                                        +
-                                    </button>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-sm text-gray-500">Total</p>
-                                    <p className="text-xl font-bold text-button-green">{totalPrice}€</p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
                 </div>
 
-                <div className="sticky bottom-0 bg-white border-t p-4">
+                <div className="sticky bottom-0 bg-[#53b1753d] p-4">
                     <div className="flex gap-2">
                         <button
                             onClick={onClose}
@@ -280,7 +253,7 @@ const ProductGridCard = ({ product, onClick }) => {
                 <img
                     src={getImageUrl(product)}
                     alt={product.title || product.name}
-                    className="w-full h-40 object-cover"
+                    className="w-full h-40 object-contain"
                     onError={(e) => {
                         e.target.src = `https://placehold.co/400x200/e2e8f0/ffffff?text=${encodeURIComponent((product.title || product.name || 'Produit').split(' ')[0])}`;
                     }}
@@ -501,9 +474,9 @@ function OffersList() {
 
     return (
         <Layout>
-            <div className="flex flex-col h-full mb-14">
+            <div className="flex flex-col h-full">
                 <div className="flex-grow overflow-y-auto">
-                    <div className="sticky top-0 bg-white border-b z-10 p-4">
+                    <div className="sticky top-0 bg-white border-b border-gray-500 z-10 p-4">
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center">
                                 <button
