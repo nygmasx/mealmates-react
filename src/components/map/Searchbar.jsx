@@ -267,7 +267,6 @@ const Searchbar = ({onFiltersApplied, onClearFilters, hasActiveFilters, onLocati
     const [searchValue, setSearchValue] = useState('');
     const [googleMapsReady, setGoogleMapsReady] = useState(false);
 
-    // Initialisation de Google Maps API (similaire à Address.jsx)
     useEffect(() => {
         if (window.google && window.google.maps && window.google.maps.places) {
             setGoogleMapsReady(true);
@@ -307,7 +306,7 @@ const Searchbar = ({onFiltersApplied, onClearFilters, hasActiveFilters, onLocati
         const autocomplete = new window.google.maps.places.Autocomplete(searchInput, {
             componentRestrictions: { country: 'fr' },
             fields: ['address_components', 'geometry', 'formatted_address', 'name'],
-            types: ['establishment', 'geocode'] // Pour rechercher des lieux et adresses
+            types: ['establishment', 'geocode']
         });
 
         autocomplete.addListener('place_changed', () => {
@@ -328,7 +327,6 @@ const Searchbar = ({onFiltersApplied, onClearFilters, hasActiveFilters, onLocati
                 address_components: place.address_components
             };
 
-            // Callback vers le composant parent avec les données de localisation
             if (onLocationSelected) {
                 onLocationSelected(locationData);
             }
@@ -343,7 +341,6 @@ const Searchbar = ({onFiltersApplied, onClearFilters, hasActiveFilters, onLocati
 
     const handleSearchSubmit = (e) => {
         e.preventDefault();
-        // Gérer la recherche manuelle si nécessaire
     };
 
     const toggleFilter = () => {

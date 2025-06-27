@@ -54,13 +54,12 @@ const MapController = ({ onLocateClick, setPosition, searchLocation }) => {
     };
   }, [map, setPosition, onLocateClick]);
 
-  // Gérer le déplacement de la carte vers la localisation recherchée
   useEffect(() => {
     if (searchLocation && searchLocation.coordinates) {
       const { latitude, longitude } = searchLocation.coordinates;
       const newPosition = [latitude, longitude];
       setPosition(newPosition);
-      map.flyTo(newPosition, 14); // Zoom plus proche pour une recherche spécifique
+      map.flyTo(newPosition, 14);
     }
   }, [searchLocation, map, setPosition]);
 
@@ -89,13 +88,11 @@ const Map = () => {
     }
   };
 
-  // Gérer la sélection d'une localisation depuis la searchbar (navigation uniquement)
   const handleLocationSelected = useCallback((locationData) => {
     console.log('Localisation sélectionnée:', locationData);
     setSelectedLocation(locationData);
   }, []);
 
-  // Gérer l'application des filtres (sans filtrage par localisation)
   const handleFiltersApplied = useCallback(async (filteredData) => {
     if (filteredData && filteredData.length > 0) {
       setFilterLoading(true);
@@ -114,7 +111,6 @@ const Map = () => {
     }
   }, []);
 
-  // Gérer l'effacement des filtres
   const handleClearFilters = useCallback(() => {
     setFilteredProducts([]);
     setSelectedLocation(null);
@@ -195,7 +191,6 @@ const Map = () => {
     }
   }, [latitude, longitude]);
 
-  // Afficher tous les produits ou les produits filtrés (sans filtrage par localisation)
   const displayedProducts = filteredProducts.length > 0 ? filteredProducts : products;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -209,7 +204,6 @@ const Map = () => {
     return hasValidCoordinates && isNotExpired;
   });
 
-  // Vérifier s'il y a des filtres actifs
   const hasActiveFilters = filteredProducts.length > 0;
 
   return (
