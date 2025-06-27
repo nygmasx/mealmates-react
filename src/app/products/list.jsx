@@ -411,7 +411,7 @@ function OffersList() {
                     return new Date(a.expirationDate) - new Date(b.expirationDate);
                 case 'recent':
                 default:
-                    return 0;
+                    return new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0);
             }
         });
 
