@@ -51,33 +51,34 @@ const useChat = () => {
             setError(null);
             const response = await axiosConfig.get('/chat/list');
             console.log(response)
-            
+
             // Transform API response to expected format
             const transformedConversations = response.data.map(chat => {
-                const lastMessage = chat.messages && chat.messages.length > 0 
+                const lastMessage = chat.messages && chat.messages.length > 0
                     ? chat.messages[chat.messages.length - 1]
                     : null;
-                    
+
                 return {
                     id: chat.id,
                     name: `${chat.relatedProduct.title} - ${chat.relatedProduct.user.email}`,
                     productTitle: chat.relatedProduct.title,
                     userEmail: chat.relatedProduct.user.email,
                     lastMessage: lastMessage ? lastMessage.content : 'Aucun message',
-                    time: lastMessage 
+                    time: lastMessage
                         ? new Date(lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                         : new Date(chat.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                     relatedProduct: chat.relatedProduct,
                     messages: chat.messages || []
                 };
             });
-            
+
             setConversations(transformedConversations);
         } catch (error) {
             console.error('Error loading conversations:', error);
             setError('Impossible de charger les conversations');
         }
     }, []);
+
 
     const loadMessages = useCallback(async (chatId) => {
         setLoading(true);
