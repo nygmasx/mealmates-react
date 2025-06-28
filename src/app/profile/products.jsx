@@ -4,6 +4,7 @@ import {FaRegClock, FaMapMarkerAlt, FaEdit, FaTrash, FaPlus, FaEye} from "react-
 import {IoMdHeart, IoMdClose} from "react-icons/io";
 import {FiArrowLeft, FiMoreVertical} from "react-icons/fi";
 import {Input} from "@/components/ui/input";
+import {showToast} from "@/utils/toast.js";
 import Layout from '../Layout';
 
 // Modale de confirmation de suppression
@@ -327,11 +328,11 @@ function ProfileProducts() {
 
             setProducts(prev => prev.filter(p => p.id !== productId));
             setDeleteModal({isOpen: false, product: null});
-
+            showToast.success('Produit supprimé avec succès');
 
         } catch (error) {
             console.error('Erreur lors de la suppression:', error);
-            alert('Erreur lors de la suppression du produit');
+            showToast.error('Erreur lors de la suppression du produit');
         } finally {
             setIsDeleting(false);
         }
@@ -348,10 +349,11 @@ function ProfileProducts() {
             setProducts(prev => prev.map(p =>
                 p.id === product.id ? {...p, isActive: newStatus} : p
             ));
+            showToast.success(`Produit ${newStatus ? 'réactivé' : 'masqué'} avec succès`);
 
         } catch (error) {
             console.error('Erreur lors de la modification du statut:', error);
-            alert('Erreur lors de la modification du statut');
+            showToast.error('Erreur lors de la modification du statut');
         }
     };
 
@@ -520,14 +522,12 @@ function ProfileProducts() {
                                         : 'Vous n\'avez pas encore de produits'}
                                 </p>
                                 {!searchTerm && filterStatus === 'all' && (
-                                    <button
-                                        onClick={() => {
-                                            alert('Redirection vers ajout de produit');
-                                        }}
-                                        className="bg-button-green text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+                                    <a
+                                        href="/offers/create"
+                                        className="inline-block bg-button-green text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
                                     >
                                         Ajouter mon premier produit
-                                    </button>
+                                    </a>
                                 )}
                                 {(searchTerm || filterStatus !== 'all') && (
                                     <button

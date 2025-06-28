@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { FiCheck, FiShare2 } from "react-icons/fi";
+import { showToast } from "@/utils/toast.js";
 
 const OfferSuccess = () => {
     const location = useLocation();
@@ -25,12 +26,18 @@ const OfferSuccess = () => {
                 text: 'J\'ai publié une nouvelle offre sur MealMates!',
                 url: `${window.location.origin}/offers/${offerId}`,
             })
-                .catch(error => console.error('Erreur de partage:', error));
+                .catch(error => {
+                    console.error('Erreur de partage:', error);
+                    showToast.error('Erreur lors du partage');
+                });
         } else {
             const shareUrl = `${window.location.origin}/offers/${offerId}`;
             navigator.clipboard.writeText(shareUrl)
-                .then(() => alert('Lien copié dans le presse-papier!'))
-                .catch(err => console.error('Erreur lors de la copie du lien:', err));
+                .then(() => showToast.success('Lien copié dans le presse-papier!'))
+                .catch(err => {
+                    console.error('Erreur lors de la copie du lien:', err);
+                    showToast.error('Erreur lors de la copie du lien');
+                });
         }
     };
 

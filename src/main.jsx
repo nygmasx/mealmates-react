@@ -4,6 +4,7 @@ import "./index.css";
 import "leaflet/dist/leaflet.css";
 import App from "./App.jsx";
 import { BrowserRouter, Routes, Route } from "react-router";
+import { Toaster } from "react-hot-toast";
 import { Login } from "@/app/auth/Login.jsx";
 import AuthIndex from "@/app/auth/AuthIndex.jsx";
 import Register from "@/app/auth/Register.jsx";
@@ -52,6 +53,7 @@ createRoot(document.getElementById("root")).render(
             <Route path="/messages/contact" element={<MessageProductOwner />} />
           </Route>
         </Routes>
+        <Toaster />
       </BrowserRouter>
     </AuthProvider>
   </StrictMode>

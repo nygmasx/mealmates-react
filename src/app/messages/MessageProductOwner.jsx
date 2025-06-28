@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { ArrowLeft, Send, User, Package } from 'lucide-react';
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Layout from '../Layout';
 import axiosConfig from "@/context/axiosConfig.js";
@@ -38,19 +37,20 @@ const MessageProductOwner = () => {
     };
 
     const handleSendMessage = async () => {
-        if (!message.trim() || !seller?.id) return;
+        if (!message.trim() || !product?.id) return;
 
         setLoading(true);
         setError(null);
 
+        console.log(product.id, message);
+
         try {
             const response = await axiosConfig.post('/chat/create', {
-                userId: seller.id,
-                message: message.trim()
+                productId: product.id,
+                message: message.trim(),
             });
 
             if (response.status === 201) {
-                navigate('/messages');
             }
         } catch (error) {
             console.error('Error sending message:', error);

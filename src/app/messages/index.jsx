@@ -51,7 +51,28 @@ const useChat = () => {
             setError(null);
             const response = await axiosConfig.get('/chat/list');
             console.log(response)
-            setConversations(response.data);
+            
+            // Transform API response to expected format
+            const transformedConversations = response.data.map(chat => {
+                const lastMessage = chat.messages && chat.messages.length > 0 
+                    ? chat.messages[chat.messages.length - 1]
+                    : null;
+                    
+                return {
+                    id: chat.id,
+                    name: `${chat.relatedProduct.title} - ${chat.relatedProduct.user.email}`,
+                    productTitle: chat.relatedProduct.title,
+                    userEmail: chat.relatedProduct.user.email,
+                    lastMessage: lastMessage ? lastMessage.content : 'Aucun message',
+                    time: lastMessage 
+                        ? new Date(lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        : new Date(chat.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    relatedProduct: chat.relatedProduct,
+                    messages: chat.messages || []
+                };
+            });
+            
+            setConversations(transformedConversations);
         } catch (error) {
             console.error('Error loading conversations:', error);
             setError('Impossible de charger les conversations');
@@ -216,7 +237,7 @@ const ConversationItem = memo(({conversation, isActive, onClick, unreadCount}) =
             <div className="w-12 h-12 rounded-full bg-[#53B175]/10 flex items-center justify-center">
                 <svg className="w-6 h-6 text-[#53B175]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                 </svg>
             </div>
             {unreadCount > 0 && (
@@ -228,10 +249,11 @@ const ConversationItem = memo(({conversation, isActive, onClick, unreadCount}) =
         </div>
         <div className="ml-3 flex-1 overflow-hidden">
             <div className="flex justify-between items-center">
-                <h3 className="font-medium text-gray-900">{conversation.name}</h3>
+                <h3 className="font-medium text-gray-900 truncate">{conversation.productTitle}</h3>
                 <span className="text-xs text-gray-500">{conversation.time}</span>
             </div>
-            <p className="text-sm text-gray-500 truncate">{conversation.lastMessage}</p>
+            <p className="text-sm text-gray-600 truncate">{conversation.userEmail}</p>
+            <p className="text-xs text-gray-500 truncate">{conversation.lastMessage}</p>
         </div>
     </div>
 ));
@@ -735,8 +757,9 @@ export default function MessagerieApp() {
                                         </svg>
                                     </div>
                                     <div className="ml-3 flex-1">
-                                        <h2 className="font-medium text-gray-900">{selectedConversation.name}</h2>
-                                        <p className="text-xs text-gray-500">
+                                        <h2 className="font-medium text-gray-900">{selectedConversation.productTitle}</h2>
+                                        <p className="text-xs text-gray-500">{selectedConversation.userEmail}</p>
+                                        <p className="text-xs text-gray-400">
                                             {isPollingEnabled ? 'En ligne' : 'Hors ligne'}
                                         </p>
                                     </div>

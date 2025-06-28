@@ -6,6 +6,7 @@ import { FiSearch, FiArrowLeft, FiMessageCircle } from "react-icons/fi";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from 'react-router';
 import Layout from '../Layout';
+import { showToast } from "@/utils/toast.js";
 
 const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
     const navigate = useNavigate();
@@ -443,10 +444,7 @@ function OffersList() {
             if (response.status === 201) {
                 const booking = response.data;
 
-                alert(`Réservation créée avec succès pour "${product.title || product.name}"!\n` +
-                    `ID de réservation: ${booking.id}\n` +
-                    `Prix total: ${booking.total_price}€\n` +
-                    `Status: En attente de confirmation du vendeur`);
+                showToast.success(`Réservation créée avec succès pour "${product.title || product.name}"!\nID de réservation: ${booking.id}\nPrix total: ${booking.total_price}€\nStatus: En attente de confirmation du vendeur`);
 
                 navigate('/messages');
             }
@@ -454,9 +452,9 @@ function OffersList() {
 
             if (error.response) {
                 const errorMessage = error.response.data?.message || 'Erreur lors de la réservation';
-                alert(`Erreur (${error.response.status}): ${errorMessage}`);
+                showToast.error(`Erreur (${error.response.status}): ${errorMessage}`);
             } else {
-                alert(`Une erreur inattendue s'est produite: ${error.message}`);
+                showToast.error(`Une erreur inattendue s'est produite: ${error.message}`);
             }
 
             throw error;
