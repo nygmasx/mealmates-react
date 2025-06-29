@@ -51,19 +51,13 @@ const MessageProductOwner = () => {
             });
 
             if (response.status === 201) {
+                navigate('/messages');
             }
         } catch (error) {
             console.error('Error sending message:', error);
             setError('Impossible d\'envoyer le message. Veuillez réessayer.');
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleKeyPress = (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleSendMessage();
         }
     };
 
@@ -150,17 +144,13 @@ const MessageProductOwner = () => {
                     )}
                 </div>
 
-                <div className="">
-
-                </div>
-
                 <div className="bg-white border-t p-4">
                     <div className="flex items-end space-x-3">
                         <div className="flex-1">
                             <textarea
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
-                                onSubmit={handleKeyPress}
+                                onSubmit={handleSendMessage}
                                 placeholder="Écrivez votre message..."
                                 className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:border-[#53B175] focus:ring-1 focus:ring-[#53B175] transition-colors"
                                 rows={3}

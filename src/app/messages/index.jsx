@@ -99,22 +99,32 @@ const useChat = (user) => {
     }, []);
 
     const pollNewMessages = useCallback(async (chatId) => {
-        if (!chatId || !lastMessageId) return;
+        if (!chatId) {
+            return;
+        }
 
         try {
-            const response = await axiosConfig.get(`/chat/${chatId}/messages`, {
-                params: { after: lastMessageId }
-            });
-            const newMessages = response.data;
+            const response = await axiosConfig.get(`/chat/${chatId}/messages`);
+            const allMessages = response.data;
 
-            if (newMessages.length > 0) {
-                setMessages(prev => [...prev, ...newMessages]);
-                setLastMessageId(newMessages[newMessages.length - 1].id);
+            setMessages(prevMessages => {
+                const prevIds = new Set(prevMessages.map(msg => msg.id));
+                const newMessages = allMessages.filter(msg => !prevIds.has(msg.id));
+
+                if (newMessages.length > 0) {
+                    return allMessages;
+                } else {
+                    return prevMessages;
+                }
+            });
+
+            if (allMessages.length > 0) {
+                setLastMessageId(allMessages[allMessages.length - 1].id);
             }
         } catch (error) {
             console.error('Error polling messages:', error);
         }
-    }, [lastMessageId]);
+    }, []);
 
     const pollUnreadCounts = useCallback(async () => {
         try {
@@ -538,13 +548,19 @@ export default function MessagerieApp() {
     } = useChat(user);
 
     usePolling(
-        () => pollNewMessages(selectedConversation?.id),
+        () => {
+            console.log('⏱️ Polling trigger for messages');
+            pollNewMessages(selectedConversation?.id);
+        },
         2000,
         isPollingEnabled && selectedConversation !== null
     );
 
     usePolling(
-        pollUnreadCounts,
+        () => {
+            console.log('⏱️ Polling trigger for unread counts');
+            pollUnreadCounts();
+        },
         5000,
         isPollingEnabled
     );
