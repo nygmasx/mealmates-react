@@ -1,9 +1,11 @@
 import {useState, useEffect, useRef, useCallback, useMemo, memo} from "react";
-import {Search, Send, Paperclip, MoreVertical, ArrowLeft, Image, AlertCircle, Check, CheckCheck, Plus, X, UserPlus} from "lucide-react";
+import {Search, Send, MoreVertical, ArrowLeft, AlertCircle, Check, CheckCheck, Plus, X, UserPlus} from "lucide-react";
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
 import Layout from "../Layout";
 import axiosConfig from "@/context/axiosConfig.js";
+import {useAuth} from "@/context/AuthContext.jsx";
+import {showToast} from "@/utils/toast.js";
 const usePolling = (callback, interval = 2000, enabled = true) => {
     const intervalRef = useRef(null);
     const callbackRef = useRef(callback);
@@ -33,7 +35,7 @@ const usePolling = (callback, interval = 2000, enabled = true) => {
     }, [interval, enabled]);
 };
 
-const useChat = () => {
+const useChat = (user) => {
     const [conversations, setConversations] = useState([]);
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -50,9 +52,7 @@ const useChat = () => {
         try {
             setError(null);
             const response = await axiosConfig.get('/chat/list');
-            console.log(response)
 
-            // Transform API response to expected format
             const transformedConversations = response.data.map(chat => {
                 const lastMessage = chat.messages && chat.messages.length > 0
                     ? chat.messages[chat.messages.length - 1]
@@ -87,7 +87,6 @@ const useChat = () => {
             const response = await axiosConfig.get(`/chat/${chatId}/messages`);
             setMessages(response.data);
 
-            // Set the last message ID for polling
             if (response.data.length > 0) {
                 setLastMessageId(response.data[response.data.length - 1].id);
             }
@@ -126,9 +125,8 @@ const useChat = () => {
         }
     }, []);
 
-    const sendMessage = useCallback(async (chatId, content, type = 'text', attachments = null) => {
-        const payload = {content, type};
-        if (attachments) payload.attachments = attachments;
+    const sendMessage = useCallback(async (chatId, content) => {
+        const payload = {content, type: 'text'};
 
         setSendingMessage(true);
         setError(null);
@@ -137,6 +135,14 @@ const useChat = () => {
 
             if (response.status === 201) {
                 const newMessage = response.data;
+
+                if ((!newMessage.sender || Array.isArray(newMessage.sender) || !newMessage.sender.id) && user) {
+                    newMessage.sender = {
+                        id: user.id,
+                        email: user.email
+                    };
+                }
+
                 setMessages(prev => [...prev, newMessage]);
                 setLastMessageId(newMessage.id);
             }
@@ -147,12 +153,11 @@ const useChat = () => {
         } finally {
             setSendingMessage(false);
         }
-    }, []);
+    }, [user]);
 
     const markAsRead = useCallback(async (chatId) => {
         try {
             await axiosConfig.post(`/chat/${chatId}/mark-read`);
-            // Update unread count locally
             setUnreadCounts(prev => ({...prev, [chatId]: 0}));
         } catch (error) {
             console.error('Error marking as read:', error);
@@ -284,17 +289,8 @@ const Message = memo(({message, currentUser}) => {
                     : 'bg-gray-100 text-gray-800 rounded-bl-none'
             }`}>
                 <p>{message.content}</p>
-                {message.attachments && message.attachments.length > 0 && (
-                    <div className="mt-2">
-                        {message.attachments.map((attachment, index) => (
-                            <div key={index} className="text-sm opacity-80">
-                                📎 {attachment.name}
-                            </div>
-                        ))}
-                    </div>
-                )}
                 <div className={`text-xs mt-1 flex items-center justify-end ${
-                    isMine ? 'text-[#53B175]/80' : 'text-gray-500'
+                    isMine ? 'text-white' : 'text-gray-500'
                 }`}>
                     <span>
                         {new Date(message.createdAt).toLocaleTimeString([], {
@@ -329,7 +325,6 @@ const NewConversationModal = memo(({ isOpen, onClose, onCreateConversation, user
         }, 300);
     }, [onSearchUsers]);
 
-    // Load all users when modal opens
     useEffect(() => {
         if (isOpen && onLoadUsers) {
             onLoadUsers();
@@ -343,12 +338,11 @@ const NewConversationModal = memo(({ isOpen, onClose, onCreateConversation, user
         try {
             const conversation = await onCreateConversation(selectedUser.id, initialMessage);
             onClose();
-            // Reset form
             setSearchQuery('');
             setSelectedUser(null);
             setInitialMessage('');
         } catch (error) {
-            // Error handled in parent component
+            showToast.error(error);
         } finally {
             setCreating(false);
         }
@@ -508,15 +502,13 @@ const TypingIndicator = memo(({ typingUsers }) => {
 });
 
 export default function MessagerieApp() {
+    const { user } = useAuth();
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [newMessage, setNewMessage] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
-    const [currentUser, setCurrentUser] = useState(null);
     const [isPollingEnabled, setIsPollingEnabled] = useState(true);
     const messagesEndRef = useRef(null);
     const typingTimeoutRef = useRef(null);
-    const fileInputRef = useRef(null);
-    const [uploadingFile, setUploadingFile] = useState(false);
     const searchDebounceRef = useRef(null);
     const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
     const [showNewConversationModal, setShowNewConversationModal] = useState(false);
@@ -543,7 +535,7 @@ export default function MessagerieApp() {
         loadAllUsers,
         searchUsers,
         createConversation
-    } = useChat();
+    } = useChat(user);
 
     usePolling(
         () => pollNewMessages(selectedConversation?.id),
@@ -557,7 +549,6 @@ export default function MessagerieApp() {
         isPollingEnabled
     );
 
-    // Stop polling when page is not visible
     useEffect(() => {
         const handleVisibilityChange = () => {
             setIsPollingEnabled(!document.hidden);
@@ -573,6 +564,7 @@ export default function MessagerieApp() {
     useEffect(() => {
         loadConversations();
     }, [loadConversations]);
+
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -609,40 +601,6 @@ export default function MessagerieApp() {
         };
     }, [searchQuery]);
 
-    // Handle file upload
-    const handleFileUpload = useCallback(async (file) => {
-        if (!selectedConversation || !file) return;
-
-        setUploadingFile(true);
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('type', 'file');
-
-            // In a real app, you'd upload the file first and get a URL
-            // For now, we'll simulate with the file name
-            await sendMessage(selectedConversation.id, `Fichier: ${file.name}`, 'file', [{
-                name: file.name,
-                size: file.size,
-                type: file.type
-            }]);
-        } catch (error) {
-            console.error('Error uploading file:', error);
-        } finally {
-            setUploadingFile(false);
-        }
-    }, [selectedConversation, sendMessage]);
-
-    const handleFileSelect = useCallback(() => {
-        fileInputRef.current?.click();
-    }, []);
-
-    const handleFileChange = useCallback((e) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            handleFileUpload(file);
-        }
-    }, [handleFileUpload]);
 
     const handleCreateConversation = useCallback(async (userId, initialMessage) => {
         const conversation = await createConversation(userId, initialMessage);
@@ -655,7 +613,6 @@ export default function MessagerieApp() {
         return conversation;
     }, [createConversation, loadMessages]);
 
-    // Group messages by date
     const groupedMessages = useMemo(() => {
         const groups = [];
         let currentDate = null;
@@ -687,7 +644,7 @@ export default function MessagerieApp() {
             await sendMessage(selectedConversation.id, newMessage);
             setNewMessage("");
         } catch (error) {
-            // Error is already handled in sendMessage
+            showToast.error(error)
         }
     }, [newMessage, selectedConversation, sendMessage, sendingMessage]);
 
@@ -796,7 +753,7 @@ export default function MessagerieApp() {
                                                     <Message
                                                         key={item.data.id}
                                                         message={item.data}
-                                                        currentUser={currentUser}
+                                                        currentUser={user}
                                                     />
                                                 )
                                             )}
@@ -819,35 +776,7 @@ export default function MessagerieApp() {
                                             }}
                                         />
                                     </div>
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        onChange={handleFileChange}
-                                        className="hidden"
-                                        accept="*/*"
-                                    />
                                     <div className="flex gap-1">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="text-gray-500 hover:text-[#53B175] hover:bg-[#53B175]/10 transition-colors duration-200"
-                                            onClick={handleFileSelect}
-                                            disabled={uploadingFile}
-                                        >
-                                            {uploadingFile ? (
-                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
-                                            ) : (
-                                                <Paperclip size={20}/>
-                                            )}
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="text-gray-500 hover:text-[#53B175] hover:bg-[#53B175]/10 transition-colors duration-200"
-                                            onClick={handleFileSelect}
-                                        >
-                                            <Image size={20}/>
-                                        </Button>
                                         <Button
                                             variant="default"
                                             size="icon"
