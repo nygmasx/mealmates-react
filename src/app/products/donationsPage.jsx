@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import axiosConfig from "@/context/axiosConfig.js";
 import { FaRegClock, FaMapMarkerAlt, FaUser, FaPhone, FaShoppingCart } from "react-icons/fa";
 import { FiSearch, FiArrowLeft, FiMessageCircle } from "react-icons/fi";
+import { IoMdClose, IoMdHeart } from "react-icons/io";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from 'react-router';
 import Layout from '../Layout';
-import { showToast } from "@/utils/toast.js";
 
 const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
     const navigate = useNavigate();
@@ -20,17 +20,18 @@ const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
         return price.toFixed(2);
     };
 
-    const getExpirationText = (expirationDate) => {
-        if (!expirationDate) return null;
+    const getExpirationText = (expiresAt) => {
+        if (!expiresAt) return null;
 
         const today = new Date();
-        const expDate = new Date(expirationDate);
+        const expDate = new Date(expiresAt);
         const diffTime = expDate - today;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
         if (diffDays === 0) return "aujourd'hui";
         if (diffDays === 1) return "demain";
         if (diffDays > 1) return `dans ${diffDays} jours`;
+        if (diffDays < 0) return "expiré";
         return "expiré";
     };
 
@@ -38,7 +39,7 @@ const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
         if (product.images && product.images.length > 0) {
             return `https://apimates.testingtest.fr/${product.images[0]}`;
         }
-        const productName = product.title || product.name || 'Produit';
+        const productName = product.title || 'Produit';
         return `https://placehold.co/600x400/e2e8f0/ffffff?text=${encodeURIComponent(productName.split(' ')[0])}`;
     };
 
@@ -55,11 +56,11 @@ const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
     };
 
     const handleContactSeller = () => {
-        if (product?.seller) {
+        if (product?.user) {
             navigate('/messages/contact', {
                 state: {
                     product: product,
-                    seller: product.seller
+                    seller: product.user
                 }
             });
         }
@@ -67,8 +68,7 @@ const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
 
     if (!product) return null;
 
-    const totalPrice = (parseFloat(product.price || 0) * quantity).toFixed(2);
-    const isFree = product.isDonation || product.price === '0' || product.price === 0;
+    const isFree = product.price === 0 || product.price === '0';
 
     if (!isOpen || !product) return null;
 
@@ -76,7 +76,7 @@ const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
         <div className="fixed inset-0 bg-opacity-50 z-[999] flex items-end">
             <div className="bg-gray-100 w-full max-h-[90vh] rounded-t-2xl overflow-y-auto">
                 <div className="sticky top-0 bg-[#53b1753d] p-4 flex justify-between items-center">
-                    <h2 className="text-xl font-semibold">Détails du produit</h2>
+                    <h2 className="text-xl font-semibold">Don gratuit</h2>
                     <button
                         onClick={onClose}
                         className="p-2 hover:bg-gray-100 rounded-full"
@@ -89,44 +89,37 @@ const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
                     <div className="relative mb-4">
                         <img
                             src={getImageUrl(product)}
-                            alt={product.title || product.name}
+                            alt={product.title}
                             className="w-full h-64 object-cover rounded-xl"
                             onError={(e) => {
-                                e.target.src = `https://placehold.co/600x400/e2e8f0/ffffff?text=${encodeURIComponent((product.title || product.name || 'Produit').split(' ')[0])}`;
+                                e.target.src = `https://placehold.co/600x400/e2e8f0/ffffff?text=${encodeURIComponent((product.title || 'Produit').split(' ')[0])}`;
                             }}
                         />
-                        {product.discount && (
-                            <div className="absolute top-3 left-3 bg-red-500 text-white text-sm px-3 py-1 rounded-lg">
-                                -{product.discount}%
-                            </div>
-                        )}
+                        <div className="absolute top-3 right-3 bg-green-500 text-white text-sm px-3 py-1 rounded-lg flex items-center">
+                            <IoMdHeart className="mr-1" size={16} />
+                            Gratuit
+                        </div>
                     </div>
 
                     <div className="">
-                        <h3 className="text-2xl font-bold mb-2">{product.title || product.name}</h3>
+                        <h3 className="text-2xl font-bold mb-2">{product.title}</h3>
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex flex-col">
                                 <span className="text-2xl font-bold text-button-green">
-                                    {isFree ? 'Gratuit' : `${formatPrice(product.price)}€`}
+                                    Gratuit
                                 </span>
-                                {product.originalPrice && (
-                                    <span className="text-lg text-gray-400 line-through">
-                                        {formatPrice(product.originalPrice)}€
-                                    </span>
-                                )}
+                                <span className="text-sm text-gray-600">Don généreux</span>
                             </div>
-                            {!isFree && (
-                                <div className="flex flex-col items-end ml-4">
-                                    <span className="text-sm text-gray-600">
-                                        <span className="font-medium">Qté:</span> {product.quantity}
-                                    </span>
-                                </div>
-                            )}
+                            <div className="flex flex-col items-end ml-4">
+                                <span className="text-sm text-gray-600">
+                                    <span className="font-medium">Qté:</span> {product.quantity}
+                                </span>
+                            </div>
                         </div>
-                        {product.expirationDate && (
+                        {product.expiresAt && (
                             <div className="flex items-center mb-3 text-gray-600">
                                 <FaRegClock className="mr-2" size={14} />
-                                <span>Expire {getExpirationText(product.expirationDate)}</span>
+                                <span>Expire {getExpirationText(product.expiresAt)}</span>
                             </div>
                         )}
 
@@ -137,33 +130,33 @@ const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
                             </div>
                         )}
 
-                        {product.dietaryTags && product.dietaryTags.length > 0 && (
+                        {product.dietaryPreferences && product.dietaryPreferences.length > 0 && (
                             <div className="mb-4">
                                 <h4 className="font-semibold mb-2">Préférences alimentaires</h4>
                                 <div className="flex flex-wrap gap-2">
-                                    {product.dietaryTags.map((tag, index) => (
+                                    {product.dietaryPreferences.map((pref, index) => (
                                         <span
                                             key={index}
                                             className="px-3 py-1 bg-green-100 text-button-green text-sm rounded-full"
                                         >
-                                            {tag.name || tag}
+                                            {pref.name || pref}
                                         </span>
                                     ))}
                                 </div>
                             </div>
                         )}
 
-                        {product.seller && (
+                        {product.user && (
                             <div className="border-t pt-4 mb-4">
-                                <h4 className="font-semibold mb-2">Vendeur</h4>
+                                <h4 className="font-semibold mb-2">Donateur</h4>
                                 <div className="flex items-center mb-2">
                                     <FaUser className="mr-2 text-gray-500" />
-                                    <span>{product.seller.name || product.seller.username}</span>
+                                    <span>{product.user.name || product.user.username}</span>
                                 </div>
-                                {product.seller.phone && (
+                                {product.user.phone && (
                                     <div className="flex items-center">
                                         <FaPhone className="mr-2 text-gray-500" />
-                                        <span>{product.seller.phone}</span>
+                                        <span>{product.user.phone}</span>
                                     </div>
                                 )}
                             </div>
@@ -179,7 +172,7 @@ const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
                         >
                             Annuler
                         </button>
-                        {product.seller && (
+                        {product.user && (
                             <button
                                 onClick={handleContactSeller}
                                 className="flex-1 py-3 border border-[#53B175] text-[#53B175] font-medium rounded-lg hover:bg-[#53B175]/5 transition-colors flex items-center justify-center"
@@ -197,8 +190,8 @@ const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
                                 <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
                             ) : (
                                 <>
-                                    <FaShoppingCart className="mr-2" />
-                                    Réserver
+                                    <IoMdHeart className="mr-2" />
+                                    Récupérer
                                 </>
                             )}
                         </button>
@@ -218,17 +211,18 @@ const ProductGridCard = ({ product, onClick }) => {
         return price.toFixed(2);
     };
 
-    const getExpirationText = (expirationDate) => {
-        if (!expirationDate) return null;
+    const getExpirationText = (expiresAt) => {
+        if (!expiresAt) return null;
 
         const today = new Date();
-        const expDate = new Date(expirationDate);
+        const expDate = new Date(expiresAt);
         const diffTime = expDate - today;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
         if (diffDays === 0) return "aujourd'hui";
         if (diffDays === 1) return "demain";
         if (diffDays > 1) return `dans ${diffDays} jours`;
+        if (diffDays < 0) return "expiré";
         return "expiré";
     };
 
@@ -236,46 +230,38 @@ const ProductGridCard = ({ product, onClick }) => {
         if (product.images && product.images.length > 0) {
             return `https://apimates.testingtest.fr/${product.images[0]}`;
         }
-        const productName = product.title || product.name || 'Produit';
+        const productName = product.title || 'Produit';
         return `https://placehold.co/400x200/e2e8f0/ffffff?text=${encodeURIComponent(productName.split(' ')[0])}`;
     };
 
     return (
         <div
-            className="bg-white md:w-72 rounded-xl shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+            className="bg-white md:w-72 rounded-xl shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow relative"
             onClick={() => onClick(product)}
         >
             <div className="relative">
                 <img
                     src={getImageUrl(product)}
-                    alt={product.title || product.name}
+                    alt={product.title}
                     className="w-full h-40 object-contain"
                     onError={(e) => {
-                        e.target.src = `https://placehold.co/400x200/e2e8f0/ffffff?text=${encodeURIComponent((product.title || product.name || 'Produit').split(' ')[0])}`;
+                        e.target.src = `https://placehold.co/400x200/e2e8f0/ffffff?text=${encodeURIComponent((product.title || 'Produit').split(' ')[0])}`;
                     }}
                 />
-                {product.discount && (
-                    <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-md">
-                        -{product.discount}%
-                    </div>
-                )}
+                <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-md flex items-center">
+                    <IoMdHeart className="mr-1" size={12} />
+                    Gratuit
+                </div>
             </div>
 
             <div className="p-3">
-                <h3 className="font-semibold text-gray-900 mb-1 truncate">{product.title || product.name}</h3>
+                <h3 className="font-semibold text-gray-900 mb-1 truncate">{product.title}</h3>
 
                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center">
                         <span className="text-lg font-bold text-button-green">
-                            {product.isDonation || product.price === '0' || product.price === 0
-                                ? 'Gratuit'
-                                : `${formatPrice(product.price)}€`}
+                            Gratuit
                         </span>
-                        {product.originalPrice && (
-                            <span className="text-sm text-gray-400 line-through ml-2">
-                                {formatPrice(product.originalPrice)}€
-                            </span>
-                        )}
                     </div>
                     {product.distance && (
                         <div className="flex items-center text-gray-500">
@@ -285,10 +271,10 @@ const ProductGridCard = ({ product, onClick }) => {
                     )}
                 </div>
 
-                {product.expirationDate && (
+                {product.expiresAt && (
                     <div className="flex items-center text-gray-500">
                         <FaRegClock className="mr-1" size={10} />
-                        <span className="text-xs">Expire {getExpirationText(product.expirationDate)}</span>
+                        <span className="text-xs">Expire {getExpirationText(product.expiresAt)}</span>
                     </div>
                 )}
 
@@ -300,7 +286,7 @@ const ProductGridCard = ({ product, onClick }) => {
     );
 };
 
-function OffersList() {
+function DonationsPage() {
     const navigate = useNavigate();
     const [products, setProducts] = useState([]);
     const [filteredProducts, setFilteredProducts] = useState([]);
@@ -332,8 +318,12 @@ function OffersList() {
                     }
                 }
 
-                setProducts(productsArray);
-                setFilteredProducts(productsArray);
+                const donationProducts = productsArray.filter(product => 
+                    product.price === 0 || product.price === '0'
+                );
+
+                setProducts(donationProducts);
+                setFilteredProducts(donationProducts);
 
             } catch (error) {
                 console.error("Erreur lors de la récupération des produits:", error);
@@ -354,22 +344,17 @@ function OffersList() {
         if (searchTerm) {
             filtered = filtered.filter(product =>
                 (product.title && product.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                (product.name && product.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()))
             );
         }
 
         filtered.sort((a, b) => {
             switch (sortBy) {
-                case 'price-low':
-                    return parseFloat(a.price || 0) - parseFloat(b.price || 0);
-                case 'price-high':
-                    return parseFloat(b.price || 0) - parseFloat(a.price || 0);
                 case 'expiration':
-                    if (!a.expirationDate && !b.expirationDate) return 0;
-                    if (!a.expirationDate) return 1;
-                    if (!b.expirationDate) return -1;
-                    return new Date(a.expirationDate) - new Date(b.expirationDate);
+                    if (!a.expiresAt && !b.expiresAt) return 0;
+                    if (!a.expiresAt) return 1;
+                    if (!b.expiresAt) return -1;
+                    return new Date(a.expiresAt) - new Date(b.expiresAt);
                 case 'recent':
                 default:
                     return new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0);
@@ -404,17 +389,18 @@ function OffersList() {
             if (response.status === 201) {
                 const booking = response.data;
 
-                showToast.success(`Réservation créée avec succès pour "${product.title || product.name}"!\nID de réservation: ${booking.id}\nPrix total: ${booking.total_price}€\nStatus: En attente de confirmation du vendeur`);
+                alert(`Don réservé avec succès pour "${product.title}"!\n` +
+                    `ID de réservation: ${booking.id}\n` +
+                    `Status: En attente de confirmation du donateur`);
 
                 navigate('/messages');
             }
         } catch (error) {
-
             if (error.response) {
                 const errorMessage = error.response.data?.message || 'Erreur lors de la réservation';
-                showToast.error(`Erreur (${error.response.status}): ${errorMessage}`);
+                alert(`Erreur (${error.response.status}): ${errorMessage}`);
             } else {
-                showToast.error(`Une erreur inattendue s'est produite: ${error.message}`);
+                alert(`Une erreur inattendue s'est produite: ${error.message}`);
             }
 
             throw error;
@@ -470,10 +456,13 @@ function OffersList() {
                                 >
                                     <FiArrowLeft size={20} />
                                 </button>
-                                <h1 className="text-xl font-bold">Tous les produits</h1>
+                                <div>
+                                    <h1 className="text-xl font-bold">Dons gratuits</h1>
+                                    <p className="text-xs text-gray-500">Produits offerts généreusement</p>
+                                </div>
                             </div>
-                            <span className="text-sm text-gray-500">
-                                {filteredProducts.length} produit{filteredProducts.length > 1 ? 's' : ''}
+                            <span className="text-xs text-gray-500">
+                                {filteredProducts.length} don{filteredProducts.length > 1 ? 's' : ''}
                             </span>
                         </div>
 
@@ -482,7 +471,7 @@ function OffersList() {
                                 <FiSearch className="ml-4 text-gray-500" size={20} />
                                 <Input
                                     type="text"
-                                    placeholder="Rechercher un produit..."
+                                    placeholder="Rechercher un don..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="border-0 bg-transparent px-2 py-3 focus:ring-0 focus:outline-none w-full"
@@ -511,26 +500,6 @@ function OffersList() {
                                 Récents
                             </button>
                             <button
-                                onClick={() => setSortBy('price-low')}
-                                className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${
-                                    sortBy === 'price-low'
-                                        ? 'bg-button-green text-white'
-                                        : 'bg-gray-100 text-gray-700'
-                                }`}
-                            >
-                                Prix croissant
-                            </button>
-                            <button
-                                onClick={() => setSortBy('price-high')}
-                                className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${
-                                    sortBy === 'price-high'
-                                        ? 'bg-button-green text-white'
-                                        : 'bg-gray-100 text-gray-700'
-                                }`}
-                            >
-                                Prix décroissant
-                            </button>
-                            <button
                                 onClick={() => setSortBy('expiration')}
                                 className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${
                                     sortBy === 'expiration'
@@ -556,8 +525,9 @@ function OffersList() {
                             </div>
                         ) : (
                             <div className="text-center py-12">
+                                <IoMdHeart className="mx-auto text-gray-400 mb-4" size={48} />
                                 <p className="text-gray-500 mb-2">
-                                    {searchTerm ? 'Aucun produit trouvé pour votre recherche' : 'Aucun produit disponible'}
+                                    {searchTerm ? 'Aucun don trouvé pour votre recherche' : 'Aucun don gratuit disponible'}
                                 </p>
                                 {searchTerm && (
                                     <button
@@ -583,4 +553,4 @@ function OffersList() {
     );
 }
 
-export default OffersList;
+export default DonationsPage;

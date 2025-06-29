@@ -1,35 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from "@/context/AuthContext.jsx";
 import axiosConfig from "@/context/axiosConfig.js";
-import { FaRegClock } from "react-icons/fa";
+import { FaRegClock, FaMapMarkerAlt, FaUser, FaPhone, FaShoppingCart } from "react-icons/fa";
 import { IoLeafOutline } from "react-icons/io5";
-import { FaMapMarkerAlt } from "react-icons/fa";
 import { IoMdHeart } from "react-icons/io";
 import { RiArrowRightSLine } from "react-icons/ri";
-import { FiSearch, FiFilter } from "react-icons/fi";
+import { FiSearch, FiFilter, FiMessageCircle } from "react-icons/fi";
 import { IoMdClose } from "react-icons/io";
 import { Input } from "@/components/ui/input";
 import Layout from '../Layout';
+import { useNavigate } from 'react-router';
 
-const ProductCard = ({ product }) => {
+const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
+    const navigate = useNavigate();
+    const [quantity, setQuantity] = useState(1);
+    const [isLoading, setPurchaseLoading] = useState(false);
+
     const formatPrice = (price) => {
+        if (!price && price !== 0) return '0.00';
         if (typeof price === 'string') {
             return parseFloat(price).toFixed(2);
         }
         return price.toFixed(2);
     };
 
-    const getExpirationText = (expirationDate) => {
-        if (!expirationDate) return null;
+    const getExpirationText = (expiresAt) => {
+        if (!expiresAt) return null;
 
         const today = new Date();
-        const expDate = new Date(expirationDate);
+        const expDate = new Date(expiresAt);
         const diffTime = expDate - today;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
         if (diffDays === 0) return "aujourd'hui";
         if (diffDays === 1) return "demain";
         if (diffDays > 1) return `dans ${diffDays} jours`;
+        if (diffDays < 0) return "expiré";
         return "expiré";
     };
 
@@ -37,19 +43,233 @@ const ProductCard = ({ product }) => {
         if (product.images && product.images.length > 0) {
             return `https://apimates.testingtest.fr/${product.images[0]}`;
         }
-        const productName = product.title || product.name || 'Produit';
+        const productName = product.title || 'Produit';
+        return `https://placehold.co/600x400/e2e8f0/ffffff?text=${encodeURIComponent(productName.split(' ')[0])}`;
+    };
+
+    const handlePurchase = async () => {
+        try {
+            setPurchaseLoading(true);
+            if (!product.id) {
+                throw new Error('Product ID is missing');
+            }
+
+            const bookingData = {
+                product_id: product.id
+            };
+
+            const response = await axiosConfig.post('/bookings', bookingData);
+
+            if (response.status === 201) {
+                const booking = response.data;
+
+                alert(`Réservation créée avec succès pour "${product.title}"!\n` +
+                    `ID de réservation: ${booking.id}\n` +
+                    `Prix total: ${booking.total_price}€\n` +
+                    `Status: En attente de confirmation du vendeur`);
+
+                navigate('/messages');
+            }
+        } catch (error) {
+            if (error.response) {
+                const errorMessage = error.response.data?.message || 'Erreur lors de la réservation';
+                alert(`Erreur (${error.response.status}): ${errorMessage}`);
+            } else {
+                alert(`Une erreur inattendue s'est produite: ${error.message}`);
+            }
+        } finally {
+            setPurchaseLoading(false);
+        }
+    };
+
+    const handleContactSeller = () => {
+        navigate('/messages');
+    };
+
+    if (!isOpen || !product) return null;
+
+    const isFree = product.price === 0 || product.price === '0';
+
+    return (
+        <div className="fixed inset-0 bg-opacity-50 z-[999] flex items-end">
+            <div className="bg-gray-100 w-full max-h-[90vh] rounded-t-2xl overflow-y-auto">
+                <div className="sticky top-0 bg-[#53b1753d] p-4 flex justify-between items-center">
+                    <h2 className="text-xl font-semibold">Détails du produit</h2>
+                    <button
+                        onClick={onClose}
+                        className="p-2 hover:bg-gray-100 rounded-full"
+                    >
+                        <IoMdClose className="h-6 w-6" />
+                    </button>
+                </div>
+
+                <div className="bg-[#53b1753d] p-4">
+                    <div className="relative mb-4">
+                        <img
+                            src={getImageUrl(product)}
+                            alt={product.title}
+                            className="w-full h-64 object-cover rounded-xl"
+                            onError={(e) => {
+                                e.target.src = `https://placehold.co/600x400/e2e8f0/ffffff?text=${encodeURIComponent((product.title || 'Produit').split(' ')[0])}`;
+                            }}
+                        />
+                        {product.discount && (
+                            <div className="absolute top-3 left-3 bg-red-500 text-white text-sm px-3 py-1 rounded-lg">
+                                -{product.discount}%
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="">
+                        <h3 className="text-2xl font-bold mb-2">{product.title}</h3>
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex flex-col">
+                                <span className="text-2xl font-bold text-button-green">
+                                    {isFree ? 'Gratuit' : `${formatPrice(product.price)}€`}
+                                </span>
+                                {product.originalPrice && (
+                                    <span className="text-lg text-gray-400 line-through">
+                                        {formatPrice(product.originalPrice)}€
+                                    </span>
+                                )}
+                            </div>
+                            {!isFree && (
+                                <div className="flex flex-col items-end ml-4">
+                                    <span className="text-sm text-gray-600">
+                                        <span className="font-medium">Qté:</span> {product.quantity}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                        {product.expiresAt && (
+                            <div className="flex items-center mb-3 text-gray-600">
+                                <FaRegClock className="mr-2" size={14} />
+                                <span>Expire {getExpirationText(product.expiresAt)}</span>
+                            </div>
+                        )}
+
+                        {product.description && (
+                            <div className="mb-4">
+                                <h4 className="font-semibold mb-2">Description</h4>
+                                <p className="text-gray-700">{product.description}</p>
+                            </div>
+                        )}
+
+                        {product.dietaryPreferences && product.dietaryPreferences.length > 0 && (
+                            <div className="mb-4">
+                                <h4 className="font-semibold mb-2">Préférences alimentaires</h4>
+                                <div className="flex flex-wrap gap-2">
+                                    {product.dietaryPreferences.map((pref, index) => (
+                                        <span
+                                            key={index}
+                                            className="px-3 py-1 bg-green-100 text-button-green text-sm rounded-full"
+                                        >
+                                            {pref.name || pref}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {product.user && (
+                            <div className="border-t pt-4 mb-4">
+                                <h4 className="font-semibold mb-2">Vendeur</h4>
+                                <div className="flex items-center mb-2">
+                                    <FaUser className="mr-2 text-gray-500" />
+                                    <span>{product.user.name || product.user.username}</span>
+                                </div>
+                                {product.user.phone && (
+                                    <div className="flex items-center">
+                                        <FaPhone className="mr-2 text-gray-500" />
+                                        <span>{product.user.phone}</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="sticky bottom-0 bg-[#53b1753d] p-4">
+                    <div className="flex gap-2">
+                        <button
+                            onClick={onClose}
+                            className="flex-1 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                        >
+                            Annuler
+                        </button>
+                        {product.user && (
+                            <button
+                                onClick={handleContactSeller}
+                                className="flex-1 py-3 border border-[#53B175] text-[#53B175] font-medium rounded-lg hover:bg-[#53B175]/5 transition-colors flex items-center justify-center"
+                            >
+                                <FiMessageCircle className="mr-2" />
+                                Contacter
+                            </button>
+                        )}
+                        <button
+                            onClick={handlePurchase}
+                            disabled={isLoading}
+                            className="flex-1 py-3 bg-button-green text-white font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center disabled:opacity-50"
+                        >
+                            {isLoading ? (
+                                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+                            ) : (
+                                <>
+                                    <FaShoppingCart className="mr-2" />
+                                    Réserver
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const ProductCard = ({ product, onClick }) => {
+    const formatPrice = (price) => {
+        if (typeof price === 'string') {
+            return parseFloat(price).toFixed(2);
+        }
+        return price.toFixed(2);
+    };
+
+    const getExpirationText = (expiresAt) => {
+        if (!expiresAt) return null;
+
+        const today = new Date();
+        const expDate = new Date(expiresAt);
+        const diffTime = expDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) return "aujourd'hui";
+        if (diffDays === 1) return "demain";
+        if (diffDays > 1) return `dans ${diffDays} jours`;
+        if (diffDays < 0) return "expiré";
+        return "expiré";
+    };
+
+    const getImageUrl = (product) => {
+        if (product.images && product.images.length > 0) {
+            return `https://apimates.testingtest.fr/${product.images[0]}`;
+        }
+        const productName = product.title || 'Produit';
         return `https://placehold.co/400x200/e2e8f0/ffffff?text=${encodeURIComponent(productName.split(' ')[0])}`;
     };
 
     return (
-        <div className="min-w-[150px] max-w-[170px] flex-shrink-0 shadow-md rounded-xl overflow-hidden bg-white">
+        <div
+            className="min-w-[150px] max-w-[170px] flex-shrink-0 shadow-md rounded-xl overflow-hidden bg-white cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => onClick(product)}
+        >
             <div className="relative">
                 <img
                     src={getImageUrl(product)}
-                    alt={product.title || product.name}
+                    alt={product.title}
                     className="w-full h-28 object-cover"
                     onError={(e) => {
-                        e.target.src = `https://placehold.co/400x200/e2e8f0/ffffff?text=${encodeURIComponent((product.title || product.name || 'Produit').split(' ')[0])}`;
+                        e.target.src = `https://placehold.co/400x200/e2e8f0/ffffff?text=${encodeURIComponent((product.title || 'Produit').split(' ')[0])}`;
                     }}
                 />
                 {product.discount && (
@@ -57,16 +277,13 @@ const ProductCard = ({ product }) => {
                         -{product.discount}%
                     </div>
                 )}
-                <button className="absolute top-2 right-2 bg-white p-1.5 rounded-full shadow-md">
-                    <IoMdHeart className={product.isFavorite ? "text-red-500" : "text-gray-300"} size={18} />
-                </button>
             </div>
             <div className="p-2.5">
                 <p className="text-sm font-medium truncate">{product.title}</p>
                 <div className="flex justify-between items-center mt-1">
                     <div className="flex items-center">
                         <span className="text-sm font-semibold text-button-green">
-                            {product.isDonation || product.price === '0' || product.price === 0
+                            {product.price === 0 || product.price === '0'
                                 ? 'Gratuit'
                                 : `${formatPrice(product.price)}€`}
                         </span>
@@ -85,10 +302,15 @@ const ProductCard = ({ product }) => {
                         )}
                     </div>
                 </div>
-                {product.expirationDate && (
+                {product.expiresAt && (
                     <div className="flex items-center mt-1 text-xs text-gray-500">
                         <FaRegClock className="mr-1" size={10} />
-                        <span>Expire {getExpirationText(product.expirationDate)}</span>
+                        <span>Expire {getExpirationText(product.expiresAt)}</span>
+                    </div>
+                )}
+                {product.quantity && (
+                    <div className="text-xs text-gray-500 mt-1">
+                        Quantité: {product.quantity}
                     </div>
                 )}
             </div>
@@ -96,7 +318,7 @@ const ProductCard = ({ product }) => {
     );
 };
 
-const ProductSection = ({ title, subtitle, seeAllLink, products, icon }) => {
+const ProductSection = ({ title, subtitle, seeAllLink, products, icon, onProductClick }) => {
     if (!products || products.length === 0) return null;
 
     return (
@@ -115,7 +337,7 @@ const ProductSection = ({ title, subtitle, seeAllLink, products, icon }) => {
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                 {products.map((product, index) => (
-                    <ProductCard key={product.id || index} product={product} />
+                    <ProductCard key={product.id || index} product={product} onClick={onProductClick} />
                 ))}
             </div>
         </div>
@@ -236,14 +458,14 @@ const FilterPanel = ({ isOpen, onClose, onApply }) => {
                             <button
                                 key={key}
                                 className={`
-                  border rounded-lg p-3 text-left transition-colors
-                  ${selectedType === key ? 'bg-green-100 border-button-green' : 'border-gray-300'}
-                `}
+                                    border rounded-lg p-3 text-left transition-colors
+                                    ${selectedType === key ? 'bg-green-100 border-button-green' : 'border-gray-300'}
+                                `}
                                 onClick={() => handleTypeChange(key)}
                             >
-                <span className={selectedType === key ? 'text-button-green' : 'text-gray-700'}>
-                  {value}
-                </span>
+                            <span className={selectedType === key ? 'text-button-green' : 'text-gray-700'}>
+                            {value}
+                            </span>
                             </button>
                         ))}
                     </div>
@@ -317,6 +539,8 @@ const Search = () => {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [error, setError] = useState(null);
     const [activeFilters, setActiveFilters] = useState({});
+    const [selectedProduct, setSelectedProduct] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -359,29 +583,34 @@ const Search = () => {
         switch(category) {
             case 'lastChance':
                 return products.filter(product => {
-                    if (!product.expirationDate) return false;
+                    if (!product.expiresAt) return false;
                     const today = new Date();
-                    const expDate = new Date(product.expirationDate);
+                    const expDate = new Date(product.expiresAt);
                     const diffTime = expDate - today;
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    return diffDays <= 1;
+                    return diffDays <= 1 && diffDays >= 0;
                 });
 
             case 'donations':
-                return products.filter(product =>
-                    product.isDonation || product.price === '0' || product.price === 0
+                return products.filter(product => 
+                    product.price === 0 || product.price === '0'
                 );
 
             case 'vegan':
-                return products.filter(product =>
-                    product.dietaryTags &&
-                    product.dietaryTags.some(tag =>
-                        tag.name && tag.name.toLowerCase().includes('végétalien')
-                    )
-                );
+                return products.filter(product => {
+                    if (!product.dietaryPreferences || !Array.isArray(product.dietaryPreferences)) return false;
+                    return product.dietaryPreferences.some(pref => {
+                        const prefString = JSON.stringify(pref).toLowerCase();
+                        return prefString.includes('végétalien') || 
+                               prefString.includes('vegan') ||
+                               prefString.includes('vegetalien');
+                    });
+                });
 
             case 'recent':
-                return products.slice(0, 5);
+                return products
+                    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+                    .slice(0, 5);
 
             default:
                 return products.slice(0, 5);
@@ -396,7 +625,6 @@ const Search = () => {
 
         const results = products.filter(product =>
             (product.title && product.title.toLowerCase().includes(term.toLowerCase())) ||
-            (product.name && product.name.toLowerCase().includes(term.toLowerCase())) ||
             (product.description && product.description.toLowerCase().includes(term.toLowerCase()))
         );
 
@@ -421,8 +649,8 @@ const Search = () => {
 
         if (filters.expirationDate) {
             filteredProducts = filteredProducts.filter(p => {
-                if (!p.expirationDate) return false;
-                const expDate = new Date(p.expirationDate);
+                if (!p.expiresAt) return false;
+                const expDate = new Date(p.expiresAt);
                 const filterDate = new Date(filters.expirationDate);
                 return expDate <= filterDate;
             });
@@ -430,14 +658,63 @@ const Search = () => {
 
         if (filters.dietaryPreferences && filters.dietaryPreferences.length > 0) {
             filteredProducts = filteredProducts.filter(p => {
-                if (!p.dietaryTags) return false;
-                return p.dietaryTags.some(tag =>
-                    filters.dietaryPreferences.includes(tag.id)
-                );
+                if (!p.dietaryPreferences || !Array.isArray(p.dietaryPreferences)) return false;
+                return p.dietaryPreferences.some(pref => {
+                    if (pref.id) {
+                        return filters.dietaryPreferences.includes(pref.id);
+                    }
+                    return filters.dietaryPreferences.some(filterId => 
+                        JSON.stringify(pref).includes(filterId.toString())
+                    );
+                });
             });
         }
 
         setSearchResults(filteredProducts);
+    };
+
+    const handleProductClick = (product) => {
+        setSelectedProduct(product);
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+        setSelectedProduct(null);
+    };
+
+    const handlePurchase = async (product, quantity) => {
+        try {
+            if (!product.id) {
+                throw new Error('Product ID is missing');
+            }
+
+            const bookingData = {
+                product_id: product.id
+            };
+
+            const response = await axiosConfig.post('/bookings', bookingData);
+
+            if (response.status === 201) {
+                const booking = response.data;
+
+                alert(`Réservation créée avec succès pour "${product.title}"!\n` +
+                    `ID de réservation: ${booking.id}\n` +
+                    `Prix total: ${booking.total_price}€\n` +
+                    `Status: En attente de confirmation du vendeur`);
+
+                handleCloseModal();
+            }
+        } catch (error) {
+            if (error.response) {
+                const errorMessage = error.response.data?.message || 'Erreur lors de la réservation';
+                alert(`Erreur (${error.response.status}): ${errorMessage}`);
+            } else {
+                alert(`Une erreur inattendue s'est produite: ${error.message}`);
+            }
+
+            throw error;
+        }
     };
 
     if (isLoading) {
@@ -498,7 +775,7 @@ const Search = () => {
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 {searchResults.map((product, index) => (
-                                    <ProductCard key={product.id || `search-${index}`} product={product} />
+                                    <ProductCard key={product.id || `search-${index}`} product={product} onClick={handleProductClick} />
                                 ))}
                             </div>
                         </div>
@@ -507,33 +784,37 @@ const Search = () => {
                             <ProductSection
                                 title="Dernière chance"
                                 subtitle="Produits qui expirent bientôt"
-                                seeAllLink="/search/last-chance"
+                                seeAllLink="/offers/last-chance"
                                 products={getProductsByCategory('lastChance')}
                                 icon={<FaRegClock className="text-button-green mr-2" size={20} />}
+                                onProductClick={handleProductClick}
                             />
 
                             <ProductSection
                                 title="Dons gratuits"
                                 subtitle="Produits offerts généreusement"
-                                seeAllLink="/search/donations"
+                                seeAllLink="/offers/donations"
                                 products={getProductsByCategory('donations')}
                                 icon={<IoMdHeart className="text-button-green mr-2" size={20} />}
+                                onProductClick={handleProductClick}
                             />
 
                             <ProductSection
                                 title="Options végétaliennes"
                                 subtitle="Découvrez nos options 100% végétales"
-                                seeAllLink="/search/vegan"
+                                seeAllLink="/offers/vegan"
                                 products={getProductsByCategory('vegan')}
                                 icon={<IoLeafOutline className="text-button-green mr-2" size={20} />}
+                                onProductClick={handleProductClick}
                             />
 
                             <ProductSection
                                 title="Récemment ajoutés"
                                 subtitle="Les dernières offres près de chez vous"
-                                seeAllLink="/search/recent"
+                                seeAllLink="/offers/recent"
                                 products={getProductsByCategory('recent')}
                                 icon={<FaMapMarkerAlt className="text-button-green mr-2" size={20} />}
+                                onProductClick={handleProductClick}
                             />
 
                             <ProductSection
@@ -542,6 +823,7 @@ const Search = () => {
                                 seeAllLink="/offers/all"
                                 products={products.slice(0, 10)}
                                 icon={<IoMdHeart className="text-button-green mr-2" size={20} />}
+                                onProductClick={handleProductClick}
                             />
                         </>
                     )}
@@ -553,6 +835,13 @@ const Search = () => {
                     )}
                 </div>
             </div>
+
+            <ProductModal
+                product={selectedProduct}
+                isOpen={isModalOpen}
+                onClose={handleCloseModal}
+                onPurchase={handlePurchase}
+            />
         </Layout>
     );
 };

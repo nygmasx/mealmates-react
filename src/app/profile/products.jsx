@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import axiosConfig from "@/context/axiosConfig.js";
 import {FaRegClock, FaMapMarkerAlt, FaEdit, FaTrash, FaPlus, FaEye} from "react-icons/fa";
-import {IoMdHeart, IoMdClose} from "react-icons/io";
 import {FiArrowLeft, FiMoreVertical} from "react-icons/fi";
 import {Input} from "@/components/ui/input";
 import {showToast} from "@/utils/toast.js";

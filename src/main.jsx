@@ -25,7 +25,10 @@ import Messages from "@/app/messages/index.jsx"
 import MessageProductOwner from "@/app/messages/MessageProductOwner.jsx";
 import OffersList from "@/app/products/list.jsx";
 import ProfileProducts from "@/app/profile/products.jsx";
-
+import LastChancePage from "@/app/products/lastChancePage.jsx";
+import DonationsPage from "@/app/products/donationsPage.jsx";
+import VeganPage from "@/app/products/veganPage.jsx";
+import RecentPage from "@/app/products/recentPage.jsx";
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <AuthProvider>
@@ -51,6 +54,10 @@ createRoot(document.getElementById("root")).render(
             <Route path="/offers/success" element={<OfferSuccess />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/messages/contact" element={<MessageProductOwner />} />
+            <Route path="/offers/last-chance" element={<LastChancePage />} />
+            <Route path="/offers/donations" element={<DonationsPage />} />
+            <Route path="/offers/vegan" element={<VeganPage />} />
+            <Route path="/offers/recent" element={<RecentPage />} />
           </Route>
         </Routes>
         <Toaster />
