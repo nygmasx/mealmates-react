@@ -20,9 +20,9 @@ const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
     const formatPrice = (price) => {
         if (!price && price !== 0) return '0.00';
         if (typeof price === 'string') {
-            return parseFloat(price).toFixed(2);
+            return parseFloat(price);
         }
-        return price.toFixed(2);
+        return price;
     };
 
     const getExpirationText = (expiresAt) => {
@@ -234,9 +234,9 @@ const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
 const ProductCard = ({ product, onClick }) => {
     const formatPrice = (price) => {
         if (typeof price === 'string') {
-            return parseFloat(price).toFixed(2);
+            return parseFloat(price);
         }
-        return price.toFixed(2);
+        return price;
     };
 
     const getExpirationText = (expiresAt) => {

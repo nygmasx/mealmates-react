@@ -48,11 +48,14 @@ const useChat = (user) => {
     const [allUsers, setAllUsers] = useState([]);
     const [filteredUsers, setFilteredUsers] = useState([]);
     const [loadingUsers, setLoadingUsers] = useState(false);
+    const [pendingBooking, setPendingBooking] = useState(null);
 
     const loadConversations = useCallback(async () => {
         try {
             setError(null);
             const response = await axiosConfig.get('/chat/list');
+
+            console.log('Debug - Chat list response:', response.data);
 
             const transformedConversations = response.data.map(chat => {
                 const lastMessage = chat.messages && chat.messages.length > 0
@@ -69,7 +72,8 @@ const useChat = (user) => {
                         ? new Date(lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                         : new Date(chat.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                     relatedProduct: chat.relatedProduct,
-                    messages: chat.messages || []
+                    messages: chat.messages || [],
+                    booking: chat.booking // Store the booking info
                 };
             });
 
@@ -220,6 +224,67 @@ const useChat = (user) => {
         }
     }, [loadConversations]);
 
+    const loadPendingBooking = useCallback((chatId) => {
+        console.log('Debug - Looking for pending booking in chatId:', chatId);
+        console.log('Debug - Available conversations:', conversations);
+        
+        const conversation = conversations.find(conv => conv.id === chatId);
+        console.log('Debug - Found conversation:', conversation);
+        
+        if (conversation && conversation.booking && !conversation.booking.isConfirmed) {
+            console.log('Debug - Found pending booking:', conversation.booking);
+            console.log('Debug - Current user:', user);
+            console.log('Debug - Product owner:', conversation.relatedProduct.user);
+            
+            // The buyer is the one who is NOT the product owner
+            // If current user is the product owner, they should see booking acceptance
+            const isCurrentUserProductOwner = user?.id === conversation.relatedProduct.user.id;
+            
+            if (isCurrentUserProductOwner) {
+                // Transform the booking data to match the expected structure
+                const transformedBooking = {
+                    id: conversation.booking.id,
+                    is_confirmed: conversation.booking.isConfirmed,
+                    total_price: conversation.booking.totalPrice,
+                    created_at: conversation.booking.createdAt,
+                    buyer: {
+                        name: "Client", // Generic name since we don't have buyer details
+                        email: conversation.userEmail
+                    },
+                    product: {
+                        id: conversation.relatedProduct.id,
+                        title: conversation.relatedProduct.title,
+                        user: conversation.relatedProduct.user
+                    }
+                };
+                setPendingBooking(transformedBooking);
+            } else {
+                // Current user is the buyer, don't show acceptance banner
+                setPendingBooking(null);
+            }
+        } else {
+            console.log('Debug - No pending booking found');
+            setPendingBooking(null);
+        }
+    }, [conversations, user]);
+
+    const acceptBooking = useCallback(async (bookingId) => {
+        try {
+            setError(null);
+            await axiosConfig.put(`/bookings/${bookingId}/confirm`);
+
+            setPendingBooking(prev => prev ? { ...prev, is_confirmed: true } : null);
+
+            showToast.success('Réservation acceptée avec succès !');
+            return true;
+        } catch (error) {
+            console.error('Error accepting booking:', error);
+            setError('Impossible d\'accepter la réservation');
+            showToast.error('Erreur lors de l\'acceptation de la réservation');
+            return false;
+        }
+    }, []);
+
     return {
         conversations,
         messages,
@@ -242,7 +307,10 @@ const useChat = (user) => {
         loadingUsers,
         loadAllUsers,
         searchUsers,
-        createConversation
+        createConversation,
+        pendingBooking,
+        loadPendingBooking,
+        acceptBooking
     };
 };
 
@@ -366,6 +434,48 @@ const TypingIndicator = memo(({ typingUsers }) => {
     );
 });
 
+const BookingAcceptanceBanner = memo(({ booking, onAccept, isAccepting }) => {
+    console.log('Debug - BookingAcceptanceBanner received booking:', booking);
+    if (!booking) return null;
+
+    return (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                        <AlertCircle className="h-5 w-5 text-yellow-400" />
+                    </div>
+                    <div className="ml-3">
+                        <h3 className="text-sm font-medium text-yellow-800">
+                            Nouvelle réservation en attente
+                        </h3>
+                        <div className="mt-1 text-sm text-yellow-700">
+                            <p><strong>{booking.buyer?.name}</strong> souhaite réserver <strong>{booking.product?.title}</strong></p>
+                            <p className="text-xs mt-1">Prix: {booking.total_price}€</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex-shrink-0">
+                    <Button
+                        onClick={() => onAccept(booking.id)}
+                        disabled={isAccepting}
+                        className="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2"
+                    >
+                        {isAccepting ? (
+                            <div className="flex items-center">
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                Acceptation...
+                            </div>
+                        ) : (
+                            'Accepter la réservation'
+                        )}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+});
+
 export default function MessagerieApp() {
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -380,6 +490,7 @@ export default function MessagerieApp() {
     const searchDebounceRef = useRef(null);
     const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
     const [showNewConversationModal, setShowNewConversationModal] = useState(false);
+    const [isAcceptingBooking, setIsAcceptingBooking] = useState(false);
 
     const {
         conversations,
@@ -402,8 +513,15 @@ export default function MessagerieApp() {
         loadingUsers,
         loadAllUsers,
         searchUsers,
-        createConversation
+        createConversation,
+        pendingBooking,
+        loadPendingBooking,
+        acceptBooking
     } = useChat(user);
+
+    useEffect(() => {
+        console.log('Debug - pendingBooking state changed:', pendingBooking);
+    }, [pendingBooking]);
 
     usePolling(
         () => {
@@ -437,9 +555,10 @@ export default function MessagerieApp() {
         setSelectedConversation(conversation);
         await loadMessages(conversation.id);
         await markAsRead(conversation.id);
+        loadPendingBooking(conversation.id);
 
         navigate(`/messages/${conversation.id}`, { replace: true });
-    }, [loadMessages, markAsRead, navigate]);
+    }, [loadMessages, markAsRead, loadPendingBooking, navigate]);
 
     useEffect(() => {
         loadConversations();
@@ -447,12 +566,13 @@ export default function MessagerieApp() {
 
     useEffect(() => {
         if (chatId && conversations.length > 0 && !selectedConversation) {
-            const conversation = conversations.find(conv => conv.id === parseInt(chatId));
+            const conversation = conversations.find(conv => conv.id === chatId);
             if (conversation) {
                 handleSelectConversation(conversation);
+                loadPendingBooking(chatId);
             }
         }
-    }, [chatId, conversations, selectedConversation, handleSelectConversation]);
+    }, [chatId, conversations, selectedConversation, handleSelectConversation, loadPendingBooking]);
 
     useEffect(() => {
         if (location.state?.fromBooking && location.state?.productId && conversations.length > 0) {
@@ -543,6 +663,23 @@ export default function MessagerieApp() {
         }
     }, [newMessage, selectedConversation, sendMessage, sendingMessage]);
 
+    const handleAcceptBooking = useCallback(async (bookingId) => {
+        setIsAcceptingBooking(true);
+        try {
+            const success = await acceptBooking(bookingId);
+            if (success) {
+                // Optionally hide the banner after acceptance
+                setTimeout(() => {
+                    loadPendingBooking(selectedConversation?.id);
+                }, 1000);
+            }
+        } catch (error) {
+            console.error('Error accepting booking:', error);
+        } finally {
+            setIsAcceptingBooking(false);
+        }
+    }, [acceptBooking, selectedConversation?.id, loadPendingBooking]);
+
     const filteredConversations = useMemo(() =>
         conversations.filter(conv =>
             conv.name?.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
@@ -617,6 +754,11 @@ export default function MessagerieApp() {
                                 </div>
 
                                 <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+                                    <BookingAcceptanceBanner
+                                        booking={pendingBooking}
+                                        onAccept={handleAcceptBooking}
+                                        isAccepting={isAcceptingBooking}
+                                    />
                                     {loading ? (
                                         <div className="flex justify-center items-center h-full">
                                             <div

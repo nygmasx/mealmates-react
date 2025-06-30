@@ -5,6 +5,7 @@ import Layout from '../Layout';
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
 import {FiArrowLeft, FiSearch} from "react-icons/fi";
+import {useNavigate} from "react-router";
 import {showToast} from "@/utils/toast.js";
 
 const BookingCard = ({booking, onStatusChange}) => {
@@ -21,16 +22,7 @@ const BookingCard = ({booking, onStatusChange}) => {
         }
     };
 
-    const handleStatusChange = async (newStatus) => {
-        try {
-            await axiosConfig.put(`/bookings/${booking.id}/status`, {status: newStatus});
-            showToast.success('Statut mis à jour avec succès');
-            onStatusChange(booking.id, newStatus);
-        } catch (error) {
-            console.error('Erreur lors de la mise à jour du statut:', error);
-            showToast.error('Erreur lors de la modification du statut');
-        }
-    };
+    const navigate = useNavigate();
 
     return (
         <div className="bg-white rounded-xl shadow-md overflow-hidden mb-4">
@@ -60,22 +52,14 @@ const BookingCard = ({booking, onStatusChange}) => {
                     </p>
                 </div>
 
-                {booking.status === 'pending' && (
-                    <div className="flex gap-2 mt-3">
+                {!booking.is_confirmed && (
+                    <div className="flex gap-2 mt-3 justify-end">
                         <Button
                             size="sm"
-                            onClick={() => handleStatusChange('confirmed')}
+                            onClick={() => navigate(`/messages/${booking.chat}/`)}
                             className="bg-green-600 hover:bg-green-700 text-white"
                         >
                             Accepter
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleStatusChange('cancelled')}
-                            className="border-red-300 text-red-600 hover:bg-red-50"
-                        >
-                            Refuser
                         </Button>
                     </div>
                 )}
@@ -99,6 +83,8 @@ export const Bookings = () => {
 
             const response = await axiosConfig.get('/bookings/seller');
 
+            console.log(response)
+
             let bookingsArray = [];
             if (Array.isArray(response.data)) {
                 bookingsArray = response.data;
@@ -114,7 +100,7 @@ export const Bookings = () => {
 
             setBookings(bookingsArray);
         } catch (error) {
-            console.error("Erreur lors de la récupération des réservations:", error);
+            showToast.error("Erreur lors de la récupération des réservations:", error);
             if (error.response?.status === 401) {
                 setError("Vous devez être connecté pour voir vos réservations");
             } else {

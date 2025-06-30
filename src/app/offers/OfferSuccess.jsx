@@ -27,8 +27,7 @@ const OfferSuccess = () => {
                 url: `${window.location.origin}/offers/${offerId}`,
             })
                 .catch(error => {
-                    console.error('Erreur de partage:', error);
-                    showToast.error('Erreur lors du partage');
+                    showToast.error('Erreur lors du partage', error);
                 });
         } else {
             const shareUrl = `${window.location.origin}/offers/${offerId}`;
@@ -84,15 +83,7 @@ const OfferSuccess = () => {
                         </Button>
 
                         <Button
-                            onClick={() => navigate(`/offers/${offerId}`)}
-                            variant="outline"
-                            className="w-full border-button-green text-button-green"
-                        >
-                            Voir mon offre
-                        </Button>
-
-                        <Button
-                            onClick={() => navigate('/offers')}
+                            onClick={() => navigate('/profile/products')}
                             variant="outline"
                             className="w-full"
                         >
