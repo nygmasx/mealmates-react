@@ -6,6 +6,7 @@ import Layout from "../Layout";
 import axiosConfig from "@/context/axiosConfig.js";
 import {useAuth} from "@/context/AuthContext.jsx";
 import {showToast} from "@/utils/toast.js";
+import {useLocation, useParams, useNavigate} from "react-router";
 const usePolling = (callback, interval = 2000, enabled = true) => {
     const intervalRef = useRef(null);
     const callbackRef = useRef(callback);
@@ -99,6 +100,7 @@ const useChat = (user) => {
     }, []);
 
     const pollNewMessages = useCallback(async (chatId) => {
+
         if (!chatId) {
             return;
         }
@@ -122,7 +124,7 @@ const useChat = (user) => {
                 setLastMessageId(allMessages[allMessages.length - 1].id);
             }
         } catch (error) {
-            console.error('Error polling messages:', error);
+            showToast.error('Error polling messages:', error);
         }
     }, []);
 
@@ -131,7 +133,7 @@ const useChat = (user) => {
             const response = await axiosConfig.get('/chat/unread-counts');
             setUnreadCounts(response.data);
         } catch (error) {
-            console.error('Error polling unread counts:', error);
+            showToast.error('Error polling unread counts:', error);
         }
     }, []);
 
@@ -315,153 +317,6 @@ const Message = memo(({message, currentUser}) => {
     );
 });
 
-const NewConversationModal = memo(({ isOpen, onClose, onCreateConversation, users, loadingUsers, onSearchUsers, onLoadUsers }) => {
-    const [searchQuery, setSearchQuery] = useState('');
-    const [selectedUser, setSelectedUser] = useState(null);
-    const [initialMessage, setInitialMessage] = useState('');
-    const [creating, setCreating] = useState(false);
-    const searchTimeoutRef = useRef(null);
-
-    const handleSearchChange = useCallback((e) => {
-        const query = e.target.value;
-        setSearchQuery(query);
-
-        if (searchTimeoutRef.current) {
-            clearTimeout(searchTimeoutRef.current);
-        }
-
-        searchTimeoutRef.current = setTimeout(() => {
-            onSearchUsers(query);
-        }, 300);
-    }, [onSearchUsers]);
-
-    useEffect(() => {
-        if (isOpen && onLoadUsers) {
-            onLoadUsers();
-        }
-    }, [isOpen, onLoadUsers]);
-
-    const handleCreateConversation = useCallback(async () => {
-        if (!selectedUser) return;
-
-        setCreating(true);
-        try {
-            const conversation = await onCreateConversation(selectedUser.id, initialMessage);
-            onClose();
-            setSearchQuery('');
-            setSelectedUser(null);
-            setInitialMessage('');
-        } catch (error) {
-            showToast.error(error);
-        } finally {
-            setCreating(false);
-        }
-    }, [selectedUser, initialMessage, onCreateConversation, onClose]);
-
-    const handleClose = useCallback(() => {
-        setSearchQuery('');
-        setSelectedUser(null);
-        setInitialMessage('');
-        onClose();
-    }, [onClose]);
-
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold">Nouvelle conversation</h2>
-                    <Button variant="ghost" size="icon" onClick={handleClose}>
-                        <X size={20} />
-                    </Button>
-                </div>
-
-                <div className="space-y-4">
-                    <div>
-                        <label className="text-sm font-medium text-gray-700 mb-2 block">
-                            Rechercher un utilisateur
-                        </label>
-                        <div className="relative">
-                            <Input
-                                type="text"
-                                placeholder="Nom d'utilisateur ou email..."
-                                value={searchQuery}
-                                onChange={handleSearchChange}
-                                className="pl-10"
-                            />
-                            <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-                        </div>
-                    </div>
-
-                    {loadingUsers && (
-                        <div className="flex justify-center py-2">
-                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#53B175]"></div>
-                        </div>
-                    )}
-
-                    {users.length > 0 && (
-                        <div className="max-h-40 overflow-y-auto border rounded-md">
-                            {users.map(user => (
-                                <div
-                                    key={user.id}
-                                    className={`p-3 cursor-pointer hover:bg-gray-50 flex items-center space-x-3 ${
-                                        selectedUser?.id === user.id ? 'bg-[#53B175]/10' : ''
-                                    }`}
-                                    onClick={() => setSelectedUser(user)}
-                                >
-                                    <div className="w-8 h-8 rounded-full bg-[#53B175]/10 flex items-center justify-center">
-                                        <UserPlus size={16} className="text-[#53B175]" />
-                                    </div>
-                                    <div>
-                                        <p className="font-medium text-sm">{user.name}</p>
-                                        <p className="text-xs text-gray-500">{user.email}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {selectedUser && (
-                        <div>
-                            <label className="text-sm font-medium text-gray-700 mb-2 block">
-                                Message initial (optionnel)
-                            </label>
-                            <textarea
-                                placeholder="Écrivez votre premier message..."
-                                value={initialMessage}
-                                onChange={(e) => setInitialMessage(e.target.value)}
-                                className="w-full p-3 border rounded-md resize-none focus:border-[#53B175] focus:ring-1 focus:ring-[#53B175]"
-                                rows={3}
-                            />
-                        </div>
-                    )}
-
-                    <div className="flex space-x-3 pt-4">
-                        <Button
-                            variant="outline"
-                            onClick={handleClose}
-                            className="flex-1"
-                        >
-                            Annuler
-                        </Button>
-                        <Button
-                            onClick={handleCreateConversation}
-                            disabled={!selectedUser || creating}
-                            className="flex-1 bg-[#53B175] hover:bg-[#53B175]/90"
-                        >
-                            {creating ? (
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            ) : null}
-                            Créer
-                        </Button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-});
-
 const DateSeparator = memo(({ date }) => {
     const formatDate = (date) => {
         const today = new Date();
@@ -513,6 +368,9 @@ const TypingIndicator = memo(({ typingUsers }) => {
 
 export default function MessagerieApp() {
     const { user } = useAuth();
+    const navigate = useNavigate();
+    const { chatId } = useParams();
+    const location = useLocation();
     const [selectedConversation, setSelectedConversation] = useState(null);
     const [newMessage, setNewMessage] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
@@ -549,7 +407,6 @@ export default function MessagerieApp() {
 
     usePolling(
         () => {
-            console.log('⏱️ Polling trigger for messages');
             pollNewMessages(selectedConversation?.id);
         },
         2000,
@@ -558,7 +415,6 @@ export default function MessagerieApp() {
 
     usePolling(
         () => {
-            console.log('⏱️ Polling trigger for unread counts');
             pollUnreadCounts();
         },
         5000,
@@ -577,9 +433,38 @@ export default function MessagerieApp() {
         };
     }, []);
 
+    const handleSelectConversation = useCallback(async (conversation) => {
+        setSelectedConversation(conversation);
+        await loadMessages(conversation.id);
+        await markAsRead(conversation.id);
+
+        navigate(`/messages/${conversation.id}`, { replace: true });
+    }, [loadMessages, markAsRead, navigate]);
+
     useEffect(() => {
         loadConversations();
     }, [loadConversations]);
+
+    useEffect(() => {
+        if (chatId && conversations.length > 0 && !selectedConversation) {
+            const conversation = conversations.find(conv => conv.id === parseInt(chatId));
+            if (conversation) {
+                handleSelectConversation(conversation);
+            }
+        }
+    }, [chatId, conversations, selectedConversation, handleSelectConversation]);
+
+    useEffect(() => {
+        if (location.state?.fromBooking && location.state?.productId && conversations.length > 0) {
+            const productId = location.state.productId;
+            const relatedConversation = conversations.find(conv =>
+                conv.relatedProduct?.id === productId
+            );
+            if (relatedConversation && !selectedConversation) {
+                handleSelectConversation(relatedConversation);
+            }
+        }
+    }, [conversations, location.state, selectedConversation, handleSelectConversation]);
 
 
     useEffect(() => {
@@ -647,12 +532,6 @@ export default function MessagerieApp() {
         return groups;
     }, [messages]);
 
-    const handleSelectConversation = async (conversation) => {
-        setSelectedConversation(conversation);
-        await loadMessages(conversation.id);
-        await markAsRead(conversation.id);
-    };
-
     const handleSendMessage = useCallback(async () => {
         if (!newMessage.trim() || !selectedConversation || sendingMessage) return;
 
@@ -678,14 +557,6 @@ export default function MessagerieApp() {
                         <div className="p-4 border-b">
                             <div className="flex items-center justify-between mb-3">
                                 <h1 className="text-xl font-bold text-gray-800">Messages</h1>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => setShowNewConversationModal(true)}
-                                    className="text-[#53B175] hover:bg-[#53B175]/10"
-                                >
-                                    <Plus size={20} />
-                                </Button>
                             </div>
                             <div className="relative">
                                 <Input
@@ -718,7 +589,10 @@ export default function MessagerieApp() {
                                 <div className="flex items-center p-4 border-b">
                                     <button
                                         className="md:hidden mr-2"
-                                        onClick={() => setSelectedConversation(null)}
+                                        onClick={() => {
+                                            setSelectedConversation(null);
+                                            navigate('/messages', { replace: true });
+                                        }}
                                     >
                                         <ArrowLeft size={20}/>
                                     </button>
@@ -821,16 +695,6 @@ export default function MessagerieApp() {
                     </div>
                 </div>
             </div>
-
-            <NewConversationModal
-                isOpen={showNewConversationModal}
-                onClose={() => setShowNewConversationModal(false)}
-                onCreateConversation={handleCreateConversation}
-                users={filteredUsers}
-                loadingUsers={loadingUsers}
-                onSearchUsers={searchUsers}
-                onLoadUsers={loadAllUsers}
-            />
         </Layout>
     );
 }

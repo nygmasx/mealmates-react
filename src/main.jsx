@@ -25,6 +25,7 @@ import Messages from "@/app/messages/index.jsx"
 import MessageProductOwner from "@/app/messages/MessageProductOwner.jsx";
 import OffersList from "@/app/products/list.jsx";
 import ProfileProducts from "@/app/profile/products.jsx";
+import ProfileBookings from "@/app/profile/bookings.jsx";
 import LastChancePage from "@/app/products/lastChancePage.jsx";
 import DonationsPage from "@/app/products/donationsPage.jsx";
 import VeganPage from "@/app/products/veganPage.jsx";
@@ -50,9 +51,11 @@ createRoot(document.getElementById("root")).render(
             <Route path="/profile/review" element={<ProfileReview />} />
             <Route path="/profile/disponibility" element={<ProfileDisponibility />} />
             <Route path="/profile/products" element={<ProfileProducts />} />
+            <Route path="/profile/bookings" element={<ProfileBookings />} />
             <Route path="/offers/create" element={<CreateOffer />} />
             <Route path="/offers/success" element={<OfferSuccess />} />
             <Route path="/messages" element={<Messages />} />
+            <Route path="/messages/:chatId" element={<Messages />} />
             <Route path="/messages/contact" element={<MessageProductOwner />} />
             <Route path="/offers/last-chance" element={<LastChancePage />} />
             <Route path="/offers/donations" element={<DonationsPage />} />

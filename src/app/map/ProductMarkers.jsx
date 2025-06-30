@@ -7,6 +7,7 @@ import axiosConfig from "@/context/axiosConfig.js";
 import {useNavigate} from 'react-router';
 import {FaMessage} from "react-icons/fa6";
 import {useAuth} from "@/context/AuthContext.jsx";
+import {showToast} from "@/utils/toast.js";
 
 const ProductLocationMarker = ({productData}) => {
     const map = useMap();
@@ -86,23 +87,25 @@ const ProductLocationMarker = ({productData}) => {
             const response = await axiosConfig.post('/bookings', bookingData);
 
             if (response.status === 201) {
-                const booking = response.data;
+                showToast.success(`Réservation créée avec succès pour "${product.title || product.name}"!\n` + `Status: En attente de confirmation du vendeur`);
 
-                alert(`Réservation créée avec succès pour "${product.title || product.name}"!\n` +
-                    `ID de réservation: ${booking.id}\n` +
-                    `Prix total: ${booking.total_price}€\n` +
-                    `Status: En attente de confirmation du vendeur`);
 
-                navigate('/messages');
+                // Navigate with booking state to trigger auto-selection
+                navigate('/messages', {
+                    state: {
+                        productId: product.id,
+                        fromBooking: true
+                    }
+                });
             }
         } catch (error) {
             if (error.response) {
                 const errorMessage = error.response.data?.message || 'Erreur lors de la réservation';
-                console.error(`Erreur (${error.response.status}): ${errorMessage}`);
+                showToast.error(`Erreur (${error.response.status}): ${errorMessage}`);
             } else {
-                console.error(`Une erreur inattendue s'est produite: ${error.message}`);
+                showToast.error(`Une erreur inattendue s'est produite: ${error.message}`);
             }
-            console.error('Erreur lors de l\'achat:', error);
+            showToast.error('Erreur lors de l\'achat:', error);
         } finally {
             setIsLoading(false);
         }
@@ -112,12 +115,12 @@ const ProductLocationMarker = ({productData}) => {
         if (!product.user.id) {
             return;
         }
-        
-        navigate('/messages/contact', { 
-            state: { 
+
+        navigate('/messages/contact', {
+            state: {
                 product: product,
                 seller: product.user
-            } 
+            }
         });
     };
 

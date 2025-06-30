@@ -6,6 +6,7 @@ import { IoMdClose } from "react-icons/io";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from 'react-router';
 import Layout from '../Layout';
+import {showToast} from "@/utils/toast.js";
 
 const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
     const navigate = useNavigate();
@@ -45,16 +46,16 @@ const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
 
     const getTimeAgo = (updatedAt) => {
         if (!updatedAt) return 'Récemment';
-        
+
         const now = new Date();
         const updated = new Date(updatedAt);
         const diffMinutes = Math.floor((now - updated) / (1000 * 60));
-        
+
         if (diffMinutes < 60) return `Il y a ${diffMinutes} min`;
-        
+
         const diffHours = Math.floor(diffMinutes / 60);
         if (diffHours < 24) return `Il y a ${diffHours}h`;
-        
+
         const diffDays = Math.floor(diffHours / 24);
         return `Il y a ${diffDays} jour${diffDays > 1 ? 's' : ''}`;
     };
@@ -249,16 +250,16 @@ const ProductGridCard = ({ product, onClick }) => {
 
     const getTimeAgo = (updatedAt) => {
         if (!updatedAt) return 'Récemment';
-        
+
         const now = new Date();
         const updated = new Date(updatedAt);
         const diffMinutes = Math.floor((now - updated) / (1000 * 60));
-        
+
         if (diffMinutes < 60) return `${diffMinutes} min`;
-        
+
         const diffHours = Math.floor(diffMinutes / 60);
         if (diffHours < 24) return `${diffHours}h`;
-        
+
         const diffDays = Math.floor(diffHours / 24);
         return `${diffDays}j`;
     };
@@ -435,10 +436,7 @@ function RecentPage() {
             if (response.status === 201) {
                 const booking = response.data;
 
-                alert(`Réservation créée avec succès pour "${product.title}"!\n` +
-                    `ID de réservation: ${booking.id}\n` +
-                    `Prix total: ${booking.total_price}€\n` +
-                    `Status: En attente de confirmation du vendeur`);
+                showToast.success(`Réservation créée avec succès pour "${product.title || product.name}"!\nID de réservation: ${booking.id}\nPrix total: ${booking.total_price}€\nStatus: En attente de confirmation du vendeur`);
 
                 navigate('/messages');
             }
