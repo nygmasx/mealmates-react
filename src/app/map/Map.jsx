@@ -8,6 +8,19 @@ import Layout from "../Layout.jsx";
 import axiosConfig from "@/context/axiosConfig.js";
 import { geocodeAddress } from "./geocodingService.js";
 
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const distance = R * c;
+  return distance;
+};
+
 const LocationMarker = ({ position }) => {
   return position === null ? null : (
     <Marker position={position} icon={createUserLocationIcon()}>
@@ -33,7 +46,7 @@ const MapController = ({ onLocateClick, setPosition, searchLocation }) => {
       map.flyTo(e.latlng, map.getZoom());
     };
 
-    const handleLocationError = (e) => {
+    const handleLocationError = () => {
       map.flyTo([49.20345799589907, 2.588511010251282], map.getZoom());
     };
 
@@ -44,6 +57,7 @@ const MapController = ({ onLocateClick, setPosition, searchLocation }) => {
       try {
         map.locate();
       } catch (error) {
+        console.error("Erreur lors de la localisation:", error);
       }
     }, 500);
 
@@ -89,16 +103,63 @@ const Map = () => {
   };
 
   const handleLocationSelected = useCallback((locationData) => {
-    console.log('Localisation sélectionnée:', locationData);
     setSelectedLocation(locationData);
   }, []);
 
-  const handleFiltersApplied = useCallback(async (filteredData) => {
+  const calculateAndLogDistances = useCallback((productsData, referencePosition) => {
+    if (!referencePosition || referencePosition.length !== 2) {
+      return;
+    }
+
+    const [refLat, refLon] = referencePosition;
+
+    const productsWithDistance = productsData
+      .filter(product => product.geocoded && product.latitude && product.longitude)
+      .map(product => {
+        const distance = calculateDistance(
+          refLat, 
+          refLon, 
+          product.latitude, 
+          product.longitude
+        );
+        return {
+          ...product,
+          distanceFromReference: distance
+        };
+      })
+      .sort((a, b) => a.distanceFromReference - b.distanceFromReference);
+
+    return productsWithDistance;
+  }, []);
+
+  const handleFiltersApplied = useCallback(async (filteredData, maxDistance) => {
     if (filteredData && filteredData.length > 0) {
       setFilterLoading(true);
       try {
         const geocodedFilteredProducts = await geocodeProducts(filteredData);
-        setFilteredProducts(geocodedFilteredProducts);
+        
+        let finalFilteredProducts = geocodedFilteredProducts;
+        if (maxDistance !== null && maxDistance !== undefined) {
+          const referencePosition = selectedLocation?.coordinates 
+            ? [selectedLocation.coordinates.latitude, selectedLocation.coordinates.longitude]
+            : currentPosition;
+          
+          finalFilteredProducts = geocodedFilteredProducts.filter(product => {
+            if (!product.geocoded || !product.latitude || !product.longitude) return false;
+            
+            const distance = calculateDistance(
+              referencePosition[0], 
+              referencePosition[1], 
+              product.latitude, 
+              product.longitude
+            );
+            
+            return distance <= maxDistance;
+          });
+        }
+        
+        setFilteredProducts(finalFilteredProducts);
+        calculateAndLogDistances(finalFilteredProducts, currentPosition);
       } catch (error) {
         console.error('Erreur lors du filtrage:', error);
       } finally {
@@ -109,14 +170,18 @@ const Map = () => {
       setFilteredProducts([]);
       setFilterLoading(false);
     }
-  }, []);
+  }, [calculateAndLogDistances, currentPosition, selectedLocation]);
 
   const handleClearFilters = useCallback(() => {
     setFilteredProducts([]);
     setSelectedLocation(null);
     setFilterLoading(false);
     setGeocodingProgress({ current: 0, total: 0 });
-  }, []);
+    
+    if (products.length > 0) {
+      calculateAndLogDistances(products, currentPosition);
+    }
+  }, [products, calculateAndLogDistances, currentPosition]);
 
   const geocodeProducts = async (productsData) => {
     const geocodedProducts = [];
@@ -146,6 +211,7 @@ const Map = () => {
             });
           }
         } catch (error) {
+          console.error("Erreur lors du geocodage :", error);
           geocodedProducts.push({
             ...productData,
             geocoded: false,
@@ -174,7 +240,9 @@ const Map = () => {
         const geocodedProducts = await geocodeProducts(response.data);
         setProducts(geocodedProducts);
         setFilteredProducts([]);
+        calculateAndLogDistances(geocodedProducts, currentPosition);
       } catch (error) {
+        console.error("Impossible de charger les produits:", error);
         setError("Impossible de charger les produits");
         setProducts([]);
       } finally {
@@ -187,9 +255,26 @@ const Map = () => {
 
   useEffect(() => {
     if (latitude && longitude) {
-      setCurrentPosition([latitude, longitude]);
+      const newPosition = [latitude, longitude];
+      setCurrentPosition(newPosition);
+      
+      const currentProducts = filteredProducts.length > 0 ? filteredProducts : products;
+      if (currentProducts.length > 0) {
+        calculateAndLogDistances(currentProducts, newPosition);
+      }
     }
-  }, [latitude, longitude]);
+  }, [latitude, longitude, products, filteredProducts, calculateAndLogDistances]);
+
+  useEffect(() => {
+    if (selectedLocation && selectedLocation.coordinates) {
+      const searchPosition = [selectedLocation.coordinates.latitude, selectedLocation.coordinates.longitude];
+      
+      const currentProducts = filteredProducts.length > 0 ? filteredProducts : products;
+      if (currentProducts.length > 0) {
+        calculateAndLogDistances(currentProducts, searchPosition);
+      }
+    }
+  }, [selectedLocation, products, filteredProducts, calculateAndLogDistances]);
 
   const displayedProducts = filteredProducts.length > 0 ? filteredProducts : products;
   const today = new Date();

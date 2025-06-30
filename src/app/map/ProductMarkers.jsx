@@ -6,11 +6,13 @@ import React, {useState} from "react";
 import axiosConfig from "@/context/axiosConfig.js";
 import {useNavigate} from 'react-router';
 import {FaMessage} from "react-icons/fa6";
+import {useAuth} from "@/context/AuthContext.jsx";
 import {showToast} from "@/utils/toast.js";
 
 const ProductLocationMarker = ({productData}) => {
     const map = useMap();
     const navigate = useNavigate();
+    const { user } = useAuth();
 
     const product = productData;
     const latitude = productData.latitude;
@@ -19,11 +21,12 @@ const ProductLocationMarker = ({productData}) => {
     const [isLoading, setIsLoading] = useState(false);
 
     if (!latitude || !longitude || !product) {
-        console.warn("Produit sans coordonnées ou données manquantes:", productData);
         return null;
     }
 
     const position = [parseFloat(latitude), parseFloat(longitude)];
+
+    const isOwner = user && product.user && product.user.id === user.id;
 
     const handleMarkerClick = () => {
         const mapHeight = map.getContainer().offsetHeight;
@@ -81,7 +84,6 @@ const ProductLocationMarker = ({productData}) => {
                 product_id: product.id
             };
 
-
             const response = await axiosConfig.post('/bookings', bookingData);
 
             if (response.status === 201) {
@@ -111,7 +113,6 @@ const ProductLocationMarker = ({productData}) => {
 
     const handleMessage = () => {
         if (!product.user.id) {
-            console.error('Product seller ID is missing');
             return;
         }
 
@@ -136,6 +137,14 @@ const ProductLocationMarker = ({productData}) => {
                     <h3 className="font-bold text-lg mb-2 text-gray-800">
                         {product.title || 'Titre manquant'}
                     </h3>
+
+                    {isOwner && (
+                        <div className="mb-2">
+                            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                                Votre annonce
+                            </span>
+                        </div>
+                    )}
 
                     <div className="flex justify-between items-center mb-2">
                         <div className="text-sm text-gray-600">
@@ -218,37 +227,40 @@ const ProductLocationMarker = ({productData}) => {
                         </div>
                     )}
                 </div>
-                <div className="space-y-2">
-                    <button
-                        onClick={handlePurchase}
-                        disabled={isLoading}
-                        className="flex-1 py-3 w-full bg-button-green text-white font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center disabled:opacity-50"
-                    >
-                        {isLoading ? (
-                            <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
-                        ) : (
-                            <>
-                                <FaShoppingCart className="mr-2"/>
-                                Réserver
-                            </>
-                        )}
-                    </button>
+                
+                {!isOwner && (
+                    <div className="space-y-2">
+                        <button
+                            onClick={handlePurchase}
+                            disabled={isLoading}
+                            className="flex-1 py-3 w-full bg-button-green text-white font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center disabled:opacity-50"
+                        >
+                            {isLoading ? (
+                                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+                            ) : (
+                                <>
+                                    <FaShoppingCart className="mr-2"/>
+                                    Réserver
+                                </>
+                            )}
+                        </button>
 
-                    <button
-                        onClick={handleMessage}
-                        disabled={isLoading}
-                        className="flex-1 py-3 w-full bg-google-blue text-white font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center disabled:opacity-50"
-                    >
-                        {isLoading ? (
-                            <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
-                        ) : (
-                            <>
-                                <FaMessage className="mr-2"/>
-                                Contacter
-                            </>
-                        )}
-                    </button>
-                </div>
+                        <button
+                            onClick={handleMessage}
+                            disabled={isLoading}
+                            className="flex-1 py-3 w-full bg-google-blue text-white font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center disabled:opacity-50"
+                        >
+                            {isLoading ? (
+                                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+                            ) : (
+                                <>
+                                    <FaMessage className="mr-2"/>
+                                    Contacter
+                                </>
+                            )}
+                        </button>
+                    </div>
+                )}
             </Popup>
         </Marker>
     );
