@@ -1,9 +1,9 @@
 import React, {useEffect, useState} from 'react';
 import {Input} from "@/components/ui/input.jsx";
 import {IoMdClose} from "react-icons/io";
-import {motion, AnimatePresence} from "framer-motion";
 import axiosConfig from "@/context/axiosConfig.js";
 import {FiFilter} from "react-icons/fi";
+import { createPortal } from 'react-dom';
 
 const SearchIcon = (props) => {
     return (
@@ -31,6 +31,7 @@ const FilterPanel = ({isOpen, onClose, onFiltersApplied}) => {
     const [expirationDate, setExpirationDate] = useState('');
     const [dietaryPreferences, setDietaryPreferences] = useState([]);
     const [selectedPreferences, setSelectedPreferences] = useState([]);
+    const [maxDistance, setMaxDistance] = useState(50);
 
     const Types = {
         food: 'Alimentation',
@@ -56,6 +57,7 @@ const FilterPanel = ({isOpen, onClose, onFiltersApplied}) => {
             const response = await axiosConfig.get('/dietary-preferences/');
             setDietaryPreferences(response.data);
         } catch (error) {
+            console.error("Erreur lors de la recup des preference alimentaires:", error);
         }
     };
 
@@ -69,6 +71,10 @@ const FilterPanel = ({isOpen, onClose, onFiltersApplied}) => {
 
     const handleExpirationDateChange = (e) => {
         setExpirationDate(e.target.value);
+    };
+
+    const handleDistanceChange = (e) => {
+        setMaxDistance(parseInt(e.target.value));
     };
 
     const handleDietaryPreferenceChange = (prefId) => {
@@ -103,7 +109,8 @@ const FilterPanel = ({isOpen, onClose, onFiltersApplied}) => {
                     type: selectedType || undefined,
                     maxPrice: priceRange[1],
                     expiresAt: formattedExpirationDate,
-                    dietaryPreferences: selectedPreferences.length > 0 ? selectedPreferences : undefined
+                    dietaryPreferences: selectedPreferences.length > 0 ? selectedPreferences : undefined,
+                    maxDistance: maxDistance
                 }
             };
 
@@ -116,9 +123,10 @@ const FilterPanel = ({isOpen, onClose, onFiltersApplied}) => {
 
             const response = await axiosConfig.post('/product/filter', filterData);
             
-            onFiltersApplied(response.data || []);
+            onFiltersApplied(response.data || [], maxDistance);
             onClose();
         } catch (error) {
+            console.error("Erreur lors de l'application des filtres :", error);
         }
     };
 
@@ -127,142 +135,176 @@ const FilterPanel = ({isOpen, onClose, onFiltersApplied}) => {
         setPriceRange([0, 100]);
         setExpirationDate('');
         setSelectedPreferences([]);
-        onFiltersApplied([]);
+        setMaxDistance(50);
+        onFiltersApplied([], null);
         onClose();
     };
 
-    return (
-        <AnimatePresence>
-            {isOpen && (
-                <motion.div
-                    className="fixed inset-0 bg-white z-[1001] overflow-y-auto"
-                    initial={{y: '100%'}}
-                    animate={{y: 0}}
-                    exit={{y: '100%'}}
-                    transition={{type: 'spring', stiffness: 300, damping: 30}}
-                >
-                    <div className="p-4 pb-24">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-semibold">Filtres</h2>
-                            <button
-                                onClick={onClose}
-                                className="p-2 hover:bg-gray-100 rounded-full"
-                            >
-                                <IoMdClose className="h-6 w-6"/>
-                            </button>
-                        </div>
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isOpen]);
 
-                        <div className="mb-6">
-                            <h3 className="text-lg font-medium mb-3">Type de produit</h3>
-                            <div className="grid grid-cols-2 gap-3">
-                                {Object.entries(Types).map(([key, value]) => (
-                                    <label
-                                        key={key}
-                                        className={`
-                                            border rounded-lg p-3 flex items-center space-x-2 cursor-pointer transition-colors
-                                            ${selectedType === key ? 'bg-green-100 border-green-500' : 'border-gray-300'}
-                                        `}
-                                    >
-                                        <input
-                                            type="radio"
-                                            name="productType"
-                                            value={key}
-                                            checked={selectedType === key}
-                                            onChange={handleTypeChange}
-                                            className="sr-only"
-                                        />
-                                        <span className={selectedType === key ? 'text-green-800' : 'text-gray-700'}>
-                                            {value}
-                                        </span>
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
+    if (!isOpen) return null;
 
-                        <div className="mb-6">
-                            <h3 className="text-lg font-medium mb-3">Date d'expiration maximale</h3>
-                            <p className="text-sm text-gray-600 mb-2">
-                                Afficher les produits qui expirent jusqu'à cette date incluse
-                            </p>
-                            <div className="relative">
-                                <input
-                                    type="date"
-                                    min={today}
-                                    value={expirationDate}
-                                    onChange={handleExpirationDateChange}
-                                    className="w-full rounded-lg border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                                />
-                            </div>
-                        </div>
+    const modalContent = (
+        <div className="fixed inset-0 z-[9999] flex items-end">
+            <div 
+                className="fixed inset-0 bg-black bg-opacity-50"
+                onClick={onClose}
+            />
+            <div className="relative w-full h-full bg-white overflow-y-auto">
+                <div className="p-4 pb-32">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-xl font-semibold">Filtres</h2>
+                        <button
+                            onClick={onClose}
+                            className="p-2 hover:bg-gray-100 rounded-full"
+                        >
+                            <IoMdClose className="h-6 w-6"/>
+                        </button>
+                    </div>
 
-                        <div className="mb-6">
-                            <h3 className="text-lg font-medium mb-3">Prix maximum</h3>
-                            <div className="space-y-2">
-                                <input
-                                    type="range"
-                                    min="0"
-                                    max="100"
-                                    value={priceRange[1]}
-                                    onChange={handlePriceRangeChange}
-                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-500"
-                                />
-                                <div className="flex justify-between text-sm text-gray-500">
-                                    <span>0 €</span>
-                                    <span>{priceRange[1]} €</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="mb-8">
-                            <h3 className="text-lg font-medium mb-3">Préférences alimentaires</h3>
-                            <div className="grid grid-cols-2 gap-3">
-                                {dietaryPreferences.map(pref => (
-                                    <label
-                                        key={pref.id}
-                                        className={`
-                                            border rounded-lg p-3 flex items-center space-x-2 cursor-pointer transition-colors
-                                            ${selectedPreferences.includes(pref.id) ? 'bg-green-100 border-green-500' : 'border-gray-300'}
-                                        `}
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedPreferences.includes(pref.id)}
-                                            onChange={() => handleDietaryPreferenceChange(pref.id)}
-                                            className="sr-only"
-                                        />
-                                        <span
-                                            className={selectedPreferences.includes(pref.id) ? 'text-green-800' : 'text-gray-700'}>
-                                            {pref.name}
-                                        </span>
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={handleClearFilters}
-                                    className="flex-1 py-3 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition-colors"
+                    <div className="mb-6">
+                        <h3 className="text-lg font-medium mb-3">Type de produit</h3>
+                        <div className="grid grid-cols-2 gap-3">
+                            {Object.entries(Types).map(([key, value]) => (
+                                <label
+                                    key={key}
+                                    className={`
+                                        border rounded-lg p-3 flex items-center space-x-2 cursor-pointer transition-colors
+                                        ${selectedType === key ? 'bg-green-100 border-green-500' : 'border-gray-300'}
+                                    `}
                                 >
-                                    Effacer
-                                </button>
-                                <button
-                                    onClick={handleApplyFilters}
-                                    className="flex-1 py-3 bg-button-green text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
-                                >
-                                    Appliquer
-                                </button>
+                                    <input
+                                        type="radio"
+                                        name="productType"
+                                        value={key}
+                                        checked={selectedType === key}
+                                        onChange={handleTypeChange}
+                                        className="sr-only"
+                                    />
+                                    <span className={selectedType === key ? 'text-green-800' : 'text-gray-700'}>
+                                        {value}
+                                    </span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="mb-6">
+                        <h3 className="text-lg font-medium mb-3">Date d'expiration maximale</h3>
+                        <p className="text-sm text-gray-600 mb-2">
+                            Afficher les produits qui expirent jusqu'à cette date incluse
+                        </p>
+                        <div className="relative">
+                            <input
+                                type="date"
+                                min={today}
+                                value={expirationDate}
+                                onChange={handleExpirationDateChange}
+                                className="w-full rounded-lg border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="mb-6">
+                        <h3 className="text-lg font-medium mb-3">Prix maximum</h3>
+                        <div className="space-y-2">
+                            <input
+                                type="range"
+                                min="0"
+                                max="100"
+                                value={priceRange[1]}
+                                onChange={handlePriceRangeChange}
+                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-500"
+                            />
+                            <div className="flex justify-between text-sm text-gray-500">
+                                <span>0 €</span>
+                                <span>{priceRange[1]} €</span>
                             </div>
                         </div>
                     </div>
-                </motion.div>
-            )}
-        </AnimatePresence>
+
+                    <div className="mb-6">
+                        <h3 className="text-lg font-medium mb-3">Distance maximum</h3>
+                        <p className="text-sm text-gray-600 mb-2">
+                            Afficher les produits dans un rayon de {maxDistance} km
+                        </p>
+                        <div className="space-y-2">
+                            <input
+                                type="range"
+                                min="1"
+                                max="100"
+                                value={maxDistance}
+                                onChange={handleDistanceChange}
+                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                            />
+                            <div className="flex justify-between text-sm text-gray-500">
+                                <span>1 km</span>
+                                <span>{maxDistance} km</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mb-8">
+                        <h3 className="text-lg font-medium mb-3">Préférences alimentaires</h3>
+                        <div className="grid grid-cols-2 gap-3">
+                            {dietaryPreferences.map(pref => (
+                                <label
+                                    key={pref.id}
+                                    className={`
+                                        border rounded-lg p-3 flex items-center space-x-2 cursor-pointer transition-colors
+                                        ${selectedPreferences.includes(pref.id) ? 'bg-green-100 border-green-500' : 'border-gray-300'}
+                                    `}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedPreferences.includes(pref.id)}
+                                        onChange={() => handleDietaryPreferenceChange(pref.id)}
+                                        className="sr-only"
+                                    />
+                                    <span
+                                        className={selectedPreferences.includes(pref.id) ? 'text-green-800' : 'text-gray-700'}>
+                                        {pref.name}
+                                    </span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handleClearFilters}
+                                className="flex-1 py-3 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition-colors"
+                            >
+                                Effacer
+                            </button>
+                            <button
+                                onClick={handleApplyFilters}
+                                className="flex-1 py-3 bg-button-green text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
+                            >
+                                Appliquer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     );
+
+    return createPortal(modalContent, document.body);
 };
 
-const Searchbar = ({onFiltersApplied, onClearFilters, hasActiveFilters, onLocationSelected}) => {
+const Searchbar = ({onFiltersApplied, hasActiveFilters, onLocationSelected}) => {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [searchValue, setSearchValue] = useState('');
     const [googleMapsReady, setGoogleMapsReady] = useState(false);
@@ -313,7 +355,6 @@ const Searchbar = ({onFiltersApplied, onClearFilters, hasActiveFilters, onLocati
             const place = autocomplete.getPlace();
 
             if (!place.geometry) {
-                console.error("Aucune information sur ce lieu.");
                 return;
             }
 
@@ -345,6 +386,19 @@ const Searchbar = ({onFiltersApplied, onClearFilters, hasActiveFilters, onLocati
 
     const toggleFilter = () => {
         setIsFilterOpen(!isFilterOpen);
+    };
+
+    const handleFiltersAppliedWithDistance = (products, maxDistance) => {
+        if (!products || products.length === 0) {
+            setSearchValue('');
+            if (onLocationSelected) {
+                onLocationSelected(null);
+            }
+        }
+        
+        if (onFiltersApplied) {
+            onFiltersApplied(products, maxDistance);
+        }
     };
 
     return (
@@ -384,7 +438,7 @@ const Searchbar = ({onFiltersApplied, onClearFilters, hasActiveFilters, onLocati
             <FilterPanel 
                 isOpen={isFilterOpen} 
                 onClose={() => setIsFilterOpen(false)}
-                onFiltersApplied={onFiltersApplied}
+                onFiltersApplied={handleFiltersAppliedWithDistance}
             />
         </>
     );

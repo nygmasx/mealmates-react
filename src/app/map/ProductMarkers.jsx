@@ -20,7 +20,6 @@ const ProductLocationMarker = ({productData}) => {
     const [isLoading, setIsLoading] = useState(false);
 
     if (!latitude || !longitude || !product) {
-        console.warn("Produit sans coordonnées ou données manquantes:", productData);
         return null;
     }
 
@@ -111,7 +110,6 @@ const ProductLocationMarker = ({productData}) => {
 
     const handleMessage = () => {
         if (!product.user.id) {
-            console.error('Product seller ID is missing');
             return;
         }
         
