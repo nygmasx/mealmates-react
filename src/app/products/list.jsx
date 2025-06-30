@@ -406,7 +406,13 @@ function OffersList() {
 
                 showToast.success(`Réservation créée avec succès pour "${product.title || product.name}"!\nID de réservation: ${booking.id}\nPrix total: ${booking.total_price}€\nStatus: En attente de confirmation du vendeur`);
 
-                navigate('/messages');
+                // Navigate with booking state to trigger auto-selection
+                navigate('/messages', {
+                    state: {
+                        productId: product.id,
+                        fromBooking: true
+                    }
+                });
             }
         } catch (error) {
 

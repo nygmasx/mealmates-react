@@ -6,6 +6,7 @@ import { IoMdClose, IoMdHeart } from "react-icons/io";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from 'react-router';
 import Layout from '../Layout';
+import {showToast} from "@/utils/toast.js";
 
 const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
     const navigate = useNavigate();
@@ -318,7 +319,7 @@ function DonationsPage() {
                     }
                 }
 
-                const donationProducts = productsArray.filter(product => 
+                const donationProducts = productsArray.filter(product =>
                     product.price === 0 || product.price === '0'
                 );
 
@@ -389,9 +390,7 @@ function DonationsPage() {
             if (response.status === 201) {
                 const booking = response.data;
 
-                alert(`Don réservé avec succès pour "${product.title}"!\n` +
-                    `ID de réservation: ${booking.id}\n` +
-                    `Status: En attente de confirmation du donateur`);
+                showToast.success(`Réservation créée avec succès pour "${product.title || product.name}"!\nID de réservation: ${booking.id}\nPrix total: ${booking.total_price}€\nStatus: En attente de confirmation du vendeur`);
 
                 navigate('/messages');
             }

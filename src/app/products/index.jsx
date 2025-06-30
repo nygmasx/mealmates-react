@@ -10,6 +10,7 @@ import { IoMdClose } from "react-icons/io";
 import { Input } from "@/components/ui/input";
 import Layout from '../Layout';
 import { useNavigate } from 'react-router';
+import {showToast} from "@/utils/toast.js";
 
 const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
     const navigate = useNavigate();
@@ -63,19 +64,22 @@ const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
             if (response.status === 201) {
                 const booking = response.data;
 
-                alert(`Réservation créée avec succès pour "${product.title}"!\n` +
-                    `ID de réservation: ${booking.id}\n` +
-                    `Prix total: ${booking.total_price}€\n` +
-                    `Status: En attente de confirmation du vendeur`);
+                showToast.success(`Réservation créée avec succès pour "${product.title || product.name}"!\nID de réservation: ${booking.id}\nPrix total: ${booking.total_price}€\nStatus: En attente de confirmation du vendeur`);
 
-                navigate('/messages');
+                // Navigate with booking state to trigger auto-selection
+                navigate('/messages', {
+                    state: {
+                        productId: product.id,
+                        fromBooking: true
+                    }
+                });
             }
         } catch (error) {
             if (error.response) {
                 const errorMessage = error.response.data?.message || 'Erreur lors de la réservation';
-                alert(`Erreur (${error.response.status}): ${errorMessage}`);
+                showToast.error(`Erreur (${error.response.status}): ${errorMessage}`);
             } else {
-                alert(`Une erreur inattendue s'est produite: ${error.message}`);
+                showToast.error(`Une erreur inattendue s'est produite: ${error.message}`);
             }
         } finally {
             setPurchaseLoading(false);
@@ -533,6 +537,7 @@ const FilterPanel = ({ isOpen, onClose, onApply }) => {
 
 const Search = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(true);
     const [products, setProducts] = useState([]);
     const [searchResults, setSearchResults] = useState([]);
@@ -592,7 +597,7 @@ const Search = () => {
                 });
 
             case 'donations':
-                return products.filter(product => 
+                return products.filter(product =>
                     product.price === 0 || product.price === '0'
                 );
 
@@ -601,7 +606,7 @@ const Search = () => {
                     if (!product.dietaryPreferences || !Array.isArray(product.dietaryPreferences)) return false;
                     return product.dietaryPreferences.some(pref => {
                         const prefString = JSON.stringify(pref).toLowerCase();
-                        return prefString.includes('végétalien') || 
+                        return prefString.includes('végétalien') ||
                                prefString.includes('vegan') ||
                                prefString.includes('vegetalien');
                     });
@@ -663,7 +668,7 @@ const Search = () => {
                     if (pref.id) {
                         return filters.dietaryPreferences.includes(pref.id);
                     }
-                    return filters.dietaryPreferences.some(filterId => 
+                    return filters.dietaryPreferences.some(filterId =>
                         JSON.stringify(pref).includes(filterId.toString())
                     );
                 });
@@ -704,6 +709,14 @@ const Search = () => {
                     `Status: En attente de confirmation du vendeur`);
 
                 handleCloseModal();
+
+                // Navigate to messages with product info to auto-open the conversation
+                navigate('/messages', {
+                    state: {
+                        productId: product.id,
+                        fromBooking: true
+                    }
+                });
             }
         } catch (error) {
             if (error.response) {
