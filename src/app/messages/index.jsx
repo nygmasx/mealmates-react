@@ -1,5 +1,5 @@
 import {useState, useEffect, useRef, useCallback, useMemo, memo} from "react";
-import {Search, Send, MoreVertical, ArrowLeft, AlertCircle, Check, CheckCheck, Plus, X, UserPlus, QrCode, Scan} from "lucide-react";
+import {Search, Send, MoreVertical, ArrowLeft, AlertCircle, Check, CheckCheck, Plus, X, UserPlus, QrCode, Scan, Star} from "lucide-react";
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
 import Layout from "../Layout";
@@ -10,6 +10,7 @@ import {useLocation, useParams, useNavigate} from "react-router";
 import {PaymentModal} from "@/components/PaymentModal.jsx";
 import {QRCodeDisplay} from "@/components/QRCodeDisplay.jsx";
 import {QRCodeScanner} from "@/components/QRCodeScanner.jsx";
+import {ReviewModal} from "@/components/ReviewModal.jsx";
 const usePolling = (callback, interval = 2000, enabled = true) => {
     const intervalRef = useRef(null);
     const callbackRef = useRef(callback);
@@ -58,7 +59,6 @@ const useChat = (user) => {
             setError(null);
             const response = await axiosConfig.get('/chat/list');
 
-            console.log()
             const transformedConversations = response.data.map(chat => {
                 const lastMessage = chat.messages && chat.messages.length > 0
                     ? chat.messages[chat.messages.length - 1]
@@ -456,7 +456,7 @@ const TypingIndicator = memo(({ typingUsers }) => {
     );
 });
 
-const BookingAcceptanceBanner = memo(({ booking, onAccept, isAccepting, onPayment, onShowQRCode, onShowQRScanner }) => {
+const BookingAcceptanceBanner = memo(({ booking, onAccept, isAccepting, onPayment, onShowQRCode, onShowQRScanner, onShowReview }) => {
     if (!booking) return null;
 
     const isConfirmed = booking.is_confirmed;
@@ -469,6 +469,7 @@ const BookingAcceptanceBanner = memo(({ booking, onAccept, isAccepting, onPaymen
     if (userRole === 'seller' && isConfirmed) {
         let bannerColor, iconColor, textColor, descColor, message;
         const canScanQR = (isFreeProduct || isPaid) && !booking.is_delivered && !booking.is_completed;
+        const canReviewBuyer = (booking.is_delivered || booking.is_completed) && !booking.seller_review_left;
 
         if (booking.is_delivered || booking.is_completed) {
             bannerColor = "bg-gray-50 border-gray-400";
@@ -517,8 +518,8 @@ const BookingAcceptanceBanner = memo(({ booking, onAccept, isAccepting, onPaymen
                             </div>
                         </div>
                     </div>
-                    {canScanQR && (
-                        <div className="flex-shrink-0">
+                    <div className="flex-shrink-0 flex gap-2">
+                        {canScanQR && (
                             <Button
                                 onClick={() => onShowQRScanner && onShowQRScanner()}
                                 className="bg-[#53B175] hover:bg-[#53B175]/90 text-white text-sm px-3 py-2 flex items-center gap-2"
@@ -526,8 +527,17 @@ const BookingAcceptanceBanner = memo(({ booking, onAccept, isAccepting, onPaymen
                                 <Scan size={16} />
                                 Scanner QR
                             </Button>
-                        </div>
-                    )}
+                        )}
+                        {canReviewBuyer && (
+                            <Button
+                                onClick={() => onShowReview && onShowReview(booking, 'seller_to_buyer')}
+                                className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-2 flex items-center gap-2"
+                            >
+                                <Star size={16} />
+                                Évaluer
+                            </Button>
+                        )}
+                    </div>
                 </div>
             </div>
         );
@@ -537,6 +547,7 @@ const BookingAcceptanceBanner = memo(({ booking, onAccept, isAccepting, onPaymen
     if (userRole === 'buyer' && isConfirmed) {
         let bannerColor, iconColor, textColor, descColor, message;
         const canShowQR = (isFreeProduct || isPaid) && !booking.is_delivered && !booking.is_completed;
+        const canReviewSeller = (booking.is_delivered || booking.is_completed) && !booking.buyer_review_left;
 
         if (booking.is_delivered || booking.is_completed) {
             bannerColor = "bg-gray-50 border-gray-400";
@@ -610,6 +621,15 @@ const BookingAcceptanceBanner = memo(({ booking, onAccept, isAccepting, onPaymen
                             >
                                 <QrCode size={16} />
                                 QR Code
+                            </Button>
+                        )}
+                        {canReviewSeller && (
+                            <Button
+                                onClick={() => onShowReview && onShowReview(booking, 'buyer_to_seller')}
+                                className="bg-purple-600 hover:bg-purple-700 text-white text-sm px-3 py-2 flex items-center gap-2"
+                            >
+                                <Star size={16} />
+                                Évaluer
                             </Button>
                         )}
                     </div>
@@ -702,6 +722,9 @@ export default function MessagerieApp() {
     const [showQRDisplay, setShowQRDisplay] = useState(false);
     const [showQRScanner, setShowQRScanner] = useState(false);
     const [bookingForQR, setBookingForQR] = useState(null);
+    const [showReviewModal, setShowReviewModal] = useState(false);
+    const [reviewType, setReviewType] = useState(null);
+    const [bookingForReview, setBookingForReview] = useState(null);
 
     const {
         conversations,
@@ -992,6 +1015,41 @@ export default function MessagerieApp() {
         }, 2000);
     }, [selectedConversation?.id, setConversations, loadConversations, setPendingBooking]);
 
+    const handleShowReview = useCallback((booking, type) => {
+        setBookingForReview(booking);
+        setReviewType(type);
+        setShowReviewModal(true);
+    }, []);
+
+    const handleCloseReviewModal = useCallback(() => {
+        setShowReviewModal(false);
+        setBookingForReview(null);
+        setReviewType(null);
+    }, []);
+
+    const handleReviewSubmitted = useCallback((review) => {
+        showToast.success('Évaluation soumise avec succès !');
+
+        // Mettre à jour l'état local du booking
+        setPendingBooking(prev => {
+            if (prev && prev.id === review.booking?.id) {
+                const updatedBooking = { ...prev };
+                if (review.review_type === 'buyer_to_seller') {
+                    updatedBooking.buyer_review_left = true;
+                } else {
+                    updatedBooking.seller_review_left = true;
+                }
+                return updatedBooking;
+            }
+            return prev;
+        });
+
+        // Recharger les conversations pour la cohérence
+        setTimeout(() => {
+            loadConversations();
+        }, 1000);
+    }, [setPendingBooking, loadConversations]);
+
     const filteredConversations = useMemo(() =>
         conversations.filter(conv =>
             conv.name?.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
@@ -1074,6 +1132,7 @@ export default function MessagerieApp() {
                                         onPayment={handlePayment}
                                         onShowQRCode={handleShowQRCode}
                                         onShowQRScanner={handleShowQRScanner}
+                                        onShowReview={handleShowReview}
                                     />
                                     {loading ? (
                                         <div className="flex justify-center items-center h-full">
@@ -1172,6 +1231,14 @@ export default function MessagerieApp() {
                 isOpen={showQRScanner}
                 onClose={handleCloseQRScanner}
                 onTransactionValidated={handleTransactionValidated}
+            />
+
+            <ReviewModal
+                isOpen={showReviewModal}
+                onClose={handleCloseReviewModal}
+                booking={bookingForReview}
+                reviewType={reviewType}
+                onReviewSubmitted={handleReviewSubmitted}
             />
         </Layout>
     );
