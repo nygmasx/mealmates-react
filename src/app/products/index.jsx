@@ -18,7 +18,7 @@ const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
     const [isLoading, setPurchaseLoading] = useState(false);
 
     const formatPrice = (price) => {
-        if (!price && price !== 0) return '0.00';
+        if (price === null || price === undefined) return '';
         if (typeof price === 'string') {
             return parseFloat(price);
         }
@@ -92,7 +92,7 @@ const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
 
     if (!isOpen || !product) return null;
 
-    const isFree = product.price === 0 || product.price === '0';
+    const isFree = product.price === 0 || product.price === '0' || product.price === null;
 
     return (
         <div className="fixed inset-0 bg-opacity-50 z-[999] flex items-end">
@@ -233,6 +233,7 @@ const ProductModal = ({ product, isOpen, onClose, onPurchase }) => {
 
 const ProductCard = ({ product, onClick }) => {
     const formatPrice = (price) => {
+        if (price === null || price === undefined) return '';
         if (typeof price === 'string') {
             return parseFloat(price);
         }
@@ -262,6 +263,8 @@ const ProductCard = ({ product, onClick }) => {
         return `https://placehold.co/400x200/e2e8f0/ffffff?text=${encodeURIComponent(productName.split(' ')[0])}`;
     };
 
+    const isFree = product.price === 0 || product.price === '0' || product.price === null;
+
     return (
         <div
             className="min-w-[150px] max-w-[170px] flex-shrink-0 shadow-md rounded-xl overflow-hidden bg-white cursor-pointer hover:shadow-lg transition-shadow"
@@ -287,7 +290,7 @@ const ProductCard = ({ product, onClick }) => {
                 <div className="flex justify-between items-center mt-1">
                     <div className="flex items-center">
                         <span className="text-sm font-semibold text-button-green">
-                            {product.price === 0 || product.price === '0'
+                            {isFree
                                 ? 'Gratuit'
                                 : `${formatPrice(product.price)}€`}
                         </span>
