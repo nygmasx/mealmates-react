@@ -17,7 +17,6 @@ const MessageProductOwner = () => {
     const { product, seller } = location.state || {};
 
     useEffect(() => {
-        console.log(product)
     }, [product, seller, navigate]);
 
     const getImageUrl = (product) => {
@@ -42,7 +41,6 @@ const MessageProductOwner = () => {
         setLoading(true);
         setError(null);
 
-        console.log(product.id, message);
 
         try {
             const response = await axiosConfig.post('/chat/create', {

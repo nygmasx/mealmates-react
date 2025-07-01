@@ -83,7 +83,6 @@ export const Bookings = () => {
 
             const response = await axiosConfig.get('/bookings/seller');
 
-            console.log(response)
 
             let bookingsArray = [];
             if (Array.isArray(response.data)) {
