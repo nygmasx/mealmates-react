@@ -26,7 +26,7 @@ function App() {
               <a href="/register" className="hidden md:flex ms-auto bg-[#53B175] text-white px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium mt-4">
                 S'inscrire
               </a>
-              <a href="/login" className="hidden md:flex ms-auto bg-white text-black px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium mt-4">
+              <a href="/login" className="hidden md:flex ms-auto bg-white text-black px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium mt-4 ml-4">
                 Se connecter
               </a>
               <div className="absolute right-10 top-6">
@@ -37,15 +37,18 @@ function App() {
                     </svg>
                   </button>
 
-                  <nav className={`${isOpen ? " absolute top-10 bg-white rounded w-[40vw] p-5" : "hidden"} `}>
-                    <ul className="flex flex-col md:flex-row flex-wrap justify-center md:justify-start gap-2 sm:gap-3 md:gap-4 font-bold text-xs sm:text-base list-none m-0 p-0">
-                      <a className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">Services</a>
-                      <a className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">Comment ça marche ?</a>
-                      <a className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">Carrière</a>
-                      <a className="px-2 py-1 hover:text-[#53B175] transition-colors cursor-pointer">Newsletter</a>
+                  <nav className={`${isOpen ? "absolute top-10 bg-white rounded w-[70vw] p-6 shadow-lg z-50" : "hidden"}`}>
+                    <ul className="flex flex-col gap-5 font-bold text-base list-none m-0 p-0">
+                      <a className="px-4 py-3 hover:text-[#53B175] transition-colors cursor-pointer tracking-wide">Services</a>
+                      <a className="px-4 py-3 hover:text-[#53B175] transition-colors cursor-pointer tracking-wide">Comment ça marche ?</a>
+                      <a className="px-4 py-3 hover:text-[#53B175] transition-colors cursor-pointer tracking-wide">Carrière</a>
+                      <a className="px-4 py-3 hover:text-[#53B175] transition-colors cursor-pointer tracking-wide">Newsletter</a>
                     </ul>
-                    <a href="/register" className=" bg-[#53B175] text-white px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium mt-4">
+                    <a href="/register" className="block bg-[#53B175] text-white px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium mt-6">
                       S'inscrire
+                    </a>
+                    <a href="/login" className="block bg-white text-black px-6 py-3 rounded hover:bg-opacity-90 transition-all font-medium mt-4">
+                      Se Connecter
                     </a>
                   </nav>
                 </div>
