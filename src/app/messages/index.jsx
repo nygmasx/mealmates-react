@@ -137,7 +137,7 @@ const useChat = (user) => {
             const response = await axiosConfig.get('/chat/unread-counts');
             setUnreadCounts(response.data);
         } catch (error) {
-            showToast.error('Error polling unread counts:', error);
+            console.error('Error polling unread counts:', error);
         }
     }, []);
 
@@ -225,16 +225,10 @@ const useChat = (user) => {
     }, [loadConversations]);
 
     const loadPendingBooking = useCallback((chatId) => {
-        console.log('Debug - Looking for pending booking in chatId:', chatId);
-        console.log('Debug - Available conversations:', conversations);
 
         const conversation = conversations.find(conv => conv.id === chatId);
-        console.log('Debug - Found conversation:', conversation);
 
-        if (conversation && conversation.booking && !conversation.booking.isConfirmed) {
-            console.log('Debug - Found pending booking:', conversation.booking);
-            console.log('Debug - Current user:', user);
-            console.log('Debug - Product owner:', conversation.relatedProduct.user);
+        if (conversation && conversation.booking) {
 
             // The buyer is the one who is NOT the product owner
             // If current user is the product owner, they should see booking acceptance
@@ -248,7 +242,8 @@ const useChat = (user) => {
                     total_price: conversation.booking.totalPrice,
                     created_at: conversation.booking.createdAt,
                     buyer: {
-                        name: "Client", // Generic name since we don't have buyer details
+                        firstName: "Client", // Generic name since we don't have buyer details
+                        name: "Client",
                         email: conversation.userEmail
                     },
                     product: {
@@ -271,7 +266,12 @@ const useChat = (user) => {
     const acceptBooking = useCallback(async (bookingId) => {
         try {
             setError(null);
-            await axiosConfig.put(`/bookings/${bookingId}/confirm`);
+            console.log(bookingId)
+            const response = await axiosConfig.patch(`/bookings/${bookingId}/respond`, {
+                action: "confirm"
+            });
+
+            console.log('Debug - Booking acceptance response:', response.data);
 
             setPendingBooking(prev => prev ? { ...prev, is_confirmed: true } : null);
 
@@ -435,9 +435,43 @@ const TypingIndicator = memo(({ typingUsers }) => {
 });
 
 const BookingAcceptanceBanner = memo(({ booking, onAccept, isAccepting }) => {
-    console.log('Debug - BookingAcceptanceBanner received booking:', booking);
     if (!booking) return null;
 
+    const isConfirmed = booking.is_confirmed;
+    const isFreeProduct = booking.total_price === 0;
+    const buyerName = booking.buyer?.firstName || booking.buyer?.name || "le client";
+
+    if (isConfirmed) {
+        // Banner for confirmed bookings
+        const bannerColor = isFreeProduct ? "bg-blue-50 border-blue-400" : "bg-green-50 border-green-400";
+        const iconColor = isFreeProduct ? "text-blue-400" : "text-green-400";
+        const textColor = isFreeProduct ? "text-blue-800" : "text-green-800";
+        const descColor = isFreeProduct ? "text-blue-700" : "text-green-700";
+
+        return (
+            <div className={`${bannerColor} border-l-4 p-4 mb-4`}>
+                <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                        <Check className={`h-5 w-5 ${iconColor}`} />
+                    </div>
+                    <div className="ml-3">
+                        <h3 className={`text-sm font-medium ${textColor}`}>
+                            Réservation confirmée
+                        </h3>
+                        <div className={`mt-1 text-sm ${descColor}`}>
+                            {isFreeProduct ? (
+                                <p>Fixez une date et un lieu de récupération avec <strong>{buyerName}</strong></p>
+                            ) : (
+                                <p>La réservation est confirmée, <strong>{buyerName}</strong> va procéder au paiement</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Banner for pending bookings (original)
     return (
         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
             <div className="flex items-center justify-between">
