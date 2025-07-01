@@ -58,7 +58,7 @@ const useChat = (user) => {
             setError(null);
             const response = await axiosConfig.get('/chat/list');
 
-
+            console.log()
             const transformedConversations = response.data.map(chat => {
                 const lastMessage = chat.messages && chat.messages.length > 0
                     ? chat.messages[chat.messages.length - 1]
@@ -241,6 +241,7 @@ const useChat = (user) => {
                 const transformedBooking = {
                     id: conversation.booking.id,
                     is_confirmed: conversation.booking.isConfirmed,
+                    is_delivered: conversation.booking.isDelivered,
                     total_price: conversation.booking.totalPrice,
                     created_at: conversation.booking.createdAt,
                     is_paid: conversation.booking.isPaid || conversation.booking.is_paid || false,
@@ -261,6 +262,7 @@ const useChat = (user) => {
                 const transformedBooking = {
                     id: conversation.booking.id,
                     is_confirmed: conversation.booking.isConfirmed,
+                    is_delivered: conversation.booking.isDelivered,
                     total_price: conversation.booking.totalPrice,
                     created_at: conversation.booking.createdAt,
                     is_paid: conversation.booking.isPaid || conversation.booking.is_paid || false,
@@ -466,9 +468,9 @@ const BookingAcceptanceBanner = memo(({ booking, onAccept, isAccepting, onPaymen
     // SELLER VIEW - Confirmed booking
     if (userRole === 'seller' && isConfirmed) {
         let bannerColor, iconColor, textColor, descColor, message;
-        const canScanQR = (isFreeProduct || isPaid) && !booking.is_completed;
+        const canScanQR = (isFreeProduct || isPaid) && !booking.is_delivered && !booking.is_completed;
 
-        if (booking.is_completed) {
+        if (booking.is_delivered || booking.is_completed) {
             bannerColor = "bg-gray-50 border-gray-400";
             iconColor = "text-gray-400";
             textColor = "text-gray-800";
@@ -503,11 +505,11 @@ const BookingAcceptanceBanner = memo(({ booking, onAccept, isAccepting, onPaymen
                         </div>
                         <div className="ml-3">
                             <h3 className={`text-sm font-medium ${textColor}`}>
-                                {booking.is_completed ? 'Transaction finalisée' : 'Réservation confirmée'}
+                                {(booking.is_delivered || booking.is_completed) ? 'Transaction finalisée' : 'Réservation confirmée'}
                             </h3>
                             <div className={`mt-1 text-sm ${descColor}`}>
                                 <p>{message}</p>
-                                {booking.is_completed && booking.completed_at && (
+                                {(booking.is_delivered || booking.is_completed) && booking.completed_at && (
                                     <p className="text-xs mt-1">
                                         Finalisée le {new Date(booking.completed_at).toLocaleDateString('fr-FR')}
                                     </p>
@@ -534,9 +536,9 @@ const BookingAcceptanceBanner = memo(({ booking, onAccept, isAccepting, onPaymen
     // BUYER VIEW - Confirmed booking
     if (userRole === 'buyer' && isConfirmed) {
         let bannerColor, iconColor, textColor, descColor, message;
-        const canShowQR = (isFreeProduct || isPaid) && !booking.is_completed;
+        const canShowQR = (isFreeProduct || isPaid) && !booking.is_delivered && !booking.is_completed;
 
-        if (booking.is_completed) {
+        if (booking.is_delivered || booking.is_completed) {
             bannerColor = "bg-gray-50 border-gray-400";
             iconColor = "text-gray-400";
             textColor = "text-gray-800";
@@ -567,7 +569,7 @@ const BookingAcceptanceBanner = memo(({ booking, onAccept, isAccepting, onPaymen
                 <div className="flex items-center justify-between">
                     <div className="flex items-center">
                         <div className="flex-shrink-0">
-                            {booking.is_completed ? (
+                            {(booking.is_delivered || booking.is_completed) ? (
                                 <Check className={`h-5 w-5 ${iconColor}`} />
                             ) : isPaid || isFreeProduct ? (
                                 <Check className={`h-5 w-5 ${iconColor}`} />
@@ -577,14 +579,14 @@ const BookingAcceptanceBanner = memo(({ booking, onAccept, isAccepting, onPaymen
                         </div>
                         <div className="ml-3">
                             <h3 className={`text-sm font-medium ${textColor}`}>
-                                {booking.is_completed ? 'Transaction finalisée' : isPaid || isFreeProduct ? 'Prêt pour récupération' : 'Paiement requis'}
+                                {(booking.is_delivered || booking.is_completed) ? 'Transaction finalisée' : isPaid || isFreeProduct ? 'Prêt pour récupération' : 'Paiement requis'}
                             </h3>
                             <div className={`mt-1 text-sm ${descColor}`}>
                                 <p>{message}</p>
                                 {!isFreeProduct && !isPaid && (
                                     <p className="text-xs mt-1">Montant: {booking.total_price}€</p>
                                 )}
-                                {booking.is_completed && booking.completed_at && (
+                                {(booking.is_delivered || booking.is_completed) && booking.completed_at && (
                                     <p className="text-xs mt-1">
                                         Finalisée le {new Date(booking.completed_at).toLocaleDateString('fr-FR')}
                                     </p>
@@ -764,6 +766,7 @@ export default function MessagerieApp() {
     }, [loadConversations]);
 
     useEffect(() => {
+        // Seulement sélectionner automatiquement au premier chargement de la page avec un chatId
         if (chatId && conversations.length > 0 && !selectedConversation) {
             const conversation = conversations.find(conv => conv.id === chatId);
             if (conversation) {
@@ -771,7 +774,8 @@ export default function MessagerieApp() {
                 loadPendingBooking(chatId);
             }
         }
-    }, [chatId, conversations, selectedConversation, handleSelectConversation, loadPendingBooking]);
+        // Ne pas forcer la désélection - laisser l'utilisateur contrôler
+    }, [chatId, conversations]); // Retiré selectedConversation des dépendances
 
     useEffect(() => {
         if (location.state?.fromBooking && location.state?.productId && conversations.length > 0) {
@@ -870,9 +874,9 @@ export default function MessagerieApp() {
                     if (conv.id === selectedConversation?.id && conv.booking && conv.booking.id === bookingId) {
                         return {
                             ...conv,
-                            booking: { 
-                                ...conv.booking, 
-                                isConfirmed: true 
+                            booking: {
+                                ...conv.booking,
+                                isConfirmed: true
                             }
                         };
                     }
@@ -912,10 +916,10 @@ export default function MessagerieApp() {
             if (conv.id === selectedConversation?.id && conv.booking && conv.booking.id === bookingToPay?.id) {
                 return {
                     ...conv,
-                    booking: { 
-                        ...conv.booking, 
-                        isPaid: true, 
-                        is_paid: true 
+                    booking: {
+                        ...conv.booking,
+                        isPaid: true,
+                        is_paid: true
                     }
                 };
             }
@@ -957,24 +961,23 @@ export default function MessagerieApp() {
 
     const handleTransactionValidated = useCallback((booking) => {
         showToast.success('Transaction finalisée avec succès !');
-        
-        // Mettre à jour l'état local
+
         setPendingBooking(prev => {
             if (prev && prev.id === booking.id) {
-                return { ...prev, is_completed: true, completed_at: booking.completed_at };
+                return { ...prev, is_delivered: true, is_completed: true, completed_at: booking.completed_at };
             }
             return prev;
         });
 
-        // Mettre à jour les conversations
         setConversations(prev => prev.map(conv => {
             if (conv.id === selectedConversation?.id && conv.booking && conv.booking.id === booking.id) {
                 return {
                     ...conv,
-                    booking: { 
-                        ...conv.booking, 
+                    booking: {
+                        ...conv.booking,
                         isCompleted: true,
                         is_completed: true,
+                        is_delivered: true,
                         completed_at: booking.completed_at
                     }
                 };
@@ -984,7 +987,6 @@ export default function MessagerieApp() {
 
         setShowQRScanner(false);
 
-        // Recharger les données après 2 secondes
         setTimeout(() => {
             loadConversations();
         }, 2000);
@@ -1035,13 +1037,14 @@ export default function MessagerieApp() {
                             <>
                                 <div className="flex items-center p-4 border-b">
                                     <button
-                                        className="md:hidden mr-2"
+                                        className="md:hidden mr-2 p-2 hover:bg-gray-100 rounded-full transition-colors"
                                         onClick={() => {
                                             setSelectedConversation(null);
-                                            navigate('/messages', { replace: true });
+                                            navigate('/messages');
                                         }}
+                                        aria-label="Retour à la liste des conversations"
                                     >
-                                        <ArrowLeft size={20}/>
+                                        <ArrowLeft size={20} className="text-gray-600"/>
                                     </button>
                                     <div
                                         className="w-10 h-10 rounded-full bg-[#53B175]/10 flex items-center justify-center">

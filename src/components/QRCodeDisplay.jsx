@@ -42,7 +42,7 @@ export const QRCodeDisplay = ({ isOpen, onClose, booking, onTransactionComplete 
         try {
             const response = await axiosConfig.post(`/bookings/${booking.id}/generate-qr-code`);
             const { token, expires_at } = response.data;
-            
+
             // Créer le payload QR avec les informations nécessaires
             const qrPayload = {
                 type: 'transaction_validation',
@@ -56,7 +56,7 @@ export const QRCodeDisplay = ({ isOpen, onClose, booking, onTransactionComplete 
             };
 
             setQrData(JSON.stringify(qrPayload));
-            
+
             // Calculer le temps restant
             const expirationTime = new Date(expires_at).getTime();
             const currentTime = Date.now();
@@ -80,7 +80,7 @@ export const QRCodeDisplay = ({ isOpen, onClose, booking, onTransactionComplete 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-sm w-full">
                 <div className="flex items-center justify-between p-4 border-b">
                     <h2 className="text-xl font-bold">QR Code de validation</h2>
@@ -123,7 +123,7 @@ export const QRCodeDisplay = ({ isOpen, onClose, booking, onTransactionComplete 
                             {!isExpired ? (
                                 <>
                                     <div className="bg-white p-4 rounded-lg border-2 border-gray-200 mb-4 inline-block">
-                                        <QRCode 
+                                        <QRCode
                                             value={qrData}
                                             size={200}
                                             level="M"
@@ -137,7 +137,7 @@ export const QRCodeDisplay = ({ isOpen, onClose, booking, onTransactionComplete 
                                             Expire dans: {formatTime(timeLeft)}
                                         </div>
                                         <div className="w-full bg-gray-200 rounded-full h-2">
-                                            <div 
+                                            <div
                                                 className="bg-[#53B175] h-2 rounded-full transition-all duration-1000"
                                                 style={{ width: `${(timeLeft / 300) * 100}%` }}
                                             ></div>
