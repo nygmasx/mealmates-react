@@ -73,7 +73,7 @@ const useChat = (user) => {
                         : new Date(chat.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                     relatedProduct: chat.relatedProduct,
                     messages: chat.messages || [],
-                    booking: chat.booking // Store the booking info
+                    booking: chat.booking
                 };
             });
 
@@ -227,19 +227,19 @@ const useChat = (user) => {
     const loadPendingBooking = useCallback((chatId) => {
         console.log('Debug - Looking for pending booking in chatId:', chatId);
         console.log('Debug - Available conversations:', conversations);
-        
+
         const conversation = conversations.find(conv => conv.id === chatId);
         console.log('Debug - Found conversation:', conversation);
-        
+
         if (conversation && conversation.booking && !conversation.booking.isConfirmed) {
             console.log('Debug - Found pending booking:', conversation.booking);
             console.log('Debug - Current user:', user);
             console.log('Debug - Product owner:', conversation.relatedProduct.user);
-            
+
             // The buyer is the one who is NOT the product owner
             // If current user is the product owner, they should see booking acceptance
             const isCurrentUserProductOwner = user?.id === conversation.relatedProduct.user.id;
-            
+
             if (isCurrentUserProductOwner) {
                 // Transform the booking data to match the expected structure
                 const transformedBooking = {
