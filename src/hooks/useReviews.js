@@ -10,9 +10,11 @@ export const useReviews = () => {
     const fetchUserReviews = useCallback(async (userId) => {
         setLoading(true);
         setError(null);
-        
+
         try {
             const response = await axiosConfig.get(`/reviews/user/${userId}`);
+            console.log(response)
+            console.log(userId)
             setReviews(response.data);
         } catch (error) {
             console.error('Error fetching user reviews:', error);
@@ -25,7 +27,7 @@ export const useReviews = () => {
     const fetchUserStats = useCallback(async (userId) => {
         setLoading(true);
         setError(null);
-        
+
         try {
             const response = await axiosConfig.get(`/reviews/user/${userId}/stats`);
             setStats(response.data);
@@ -78,10 +80,10 @@ export const useBookingReviewStatus = (bookingId) => {
 
     const fetchStatus = useCallback(async () => {
         if (!bookingId) return;
-        
+
         setLoading(true);
         setError(null);
-        
+
         try {
             const response = await axiosConfig.get(`/reviews/booking/${bookingId}/status`);
             setStatus(response.data);
