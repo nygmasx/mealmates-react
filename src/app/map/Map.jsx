@@ -8,6 +8,7 @@ import Layout from "../Layout.jsx";
 import axiosConfig from "@/context/axiosConfig.js";
 import { geocodeAddress } from "./geocodingService.js";
 
+//formule haversine (distance entre 2 points d'une sphere)
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;

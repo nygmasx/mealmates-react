@@ -61,16 +61,6 @@ const ProductActionMenu = ({product, onEdit, onDelete, onToggleStatus, isOpen, o
             </button>
             <button
                 onClick={() => {
-                    onToggleStatus(product);
-                    onToggle();
-                }}
-                className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center border-b"
-            >
-                <FaEye className={`mr-3 ${product.isActive ? 'text-orange-500' : 'text-green-500'}`} size={16}/>
-                {product.isActive ? 'Masquer' : 'Réactiver'}
-            </button>
-            <button
-                onClick={() => {
                     onDelete(product);
                     onToggle();
                 }}
